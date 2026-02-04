@@ -1,0 +1,1021 @@
+{
+	"info": {
+		"_postman_id": "saverfox-api-collection",
+		"name": "SaverFox AI Backend API",
+		"description": "Complete API collection for SaverFox AI Backend - A money adventure game for teaching children financial literacy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "saverfox-team"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('userId', response.userId);",
+									"    pm.environment.set('token', response.token);",
+									"    pm.test('Registration successful', () => {",
+									"        pm.expect(response).to.have.property('userId');",
+									"        pm.expect(response).to.have.property('token');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"SecurePass123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('userId', response.userId);",
+									"    pm.environment.set('token', response.token);",
+									"    pm.test('Login successful', () => {",
+									"        pm.expect(response).to.have.property('userId');",
+									"        pm.expect(response).to.have.property('token');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"usernameOrEmail\": \"johndoe\",\n  \"password\": \"SecurePass123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Login with username/email and password"
+					},
+					"response": []
+				}
+			],
+			"description": "User authentication endpoints"
+		},
+		{
+			"name": "Profile & Onboarding",
+			"item": [
+				{
+					"name": "Create Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('profileId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"age\": 10,\n  \"allowance\": 10.00,\n  \"currency\": \"USD\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["profile"]
+						},
+						"description": "Create user profile with age and allowance"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Starter Characters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.characters && response.characters.length > 0) {",
+									"        pm.environment.set('characterId', response.characters[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/characters/starter",
+							"host": ["{{baseUrl}}"],
+							"path": ["characters", "starter"]
+						},
+						"description": "Get available starter characters"
+					},
+					"response": []
+				},
+				{
+					"name": "Choose Starter Character",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"characterId\": \"{{characterId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/characters/choose",
+							"host": ["{{baseUrl}}"],
+							"path": ["characters", "choose"]
+						},
+						"description": "Choose a starter character and create tamagotchi"
+					},
+					"response": []
+				}
+			],
+			"description": "Profile creation and onboarding flow"
+		},
+		{
+			"name": "Wallet",
+			"item": [
+				{
+					"name": "Get Wallet Balance",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/wallet",
+							"host": ["{{baseUrl}}"],
+							"path": ["wallet"]
+						},
+						"description": "Get current wallet balance"
+					},
+					"response": []
+				}
+			],
+			"description": "Wallet and coin management"
+		},
+		{
+			"name": "Shop",
+			"item": [
+				{
+					"name": "Get Characters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.items && response.items.length > 0) {",
+									"        pm.environment.set('shopCharacterId', response.items[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shop/characters",
+							"host": ["{{baseUrl}}"],
+							"path": ["shop", "characters"]
+						},
+						"description": "Browse available characters in shop"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Foods",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.items && response.items.length > 0) {",
+									"        pm.environment.set('foodId', response.items[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shop/foods",
+							"host": ["{{baseUrl}}"],
+							"path": ["shop", "foods"]
+						},
+						"description": "Browse available food items in shop"
+					},
+					"response": []
+				},
+				{
+					"name": "Buy Item",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": \"{{foodId}}\",\n  \"itemType\": \"food\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shop/buy",
+							"host": ["{{baseUrl}}"],
+							"path": ["shop", "buy"]
+						},
+						"description": "Purchase an item from the shop"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Inventory",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shop/inventory",
+							"host": ["{{baseUrl}}"],
+							"path": ["shop", "inventory"]
+						},
+						"description": "Get user's inventory"
+					},
+					"response": []
+				}
+			],
+			"description": "Shop and inventory management"
+		},
+		{
+			"name": "Missions",
+			"item": [
+				{
+					"name": "Get Today's Mission",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/missions/today",
+							"host": ["{{baseUrl}}"],
+							"path": ["missions", "today"]
+						},
+						"description": "Get today's active mission"
+					},
+					"response": []
+				},
+				{
+					"name": "Log Expense",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 2.50,\n  \"category\": \"snacks\",\n  \"description\": \"Bought candy at school\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/missions/log-expense",
+							"host": ["{{baseUrl}}"],
+							"path": ["missions", "log-expense"]
+						},
+						"description": "Log an expense entry"
+					},
+					"response": []
+				},
+				{
+					"name": "Log Saving",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 5.00,\n  \"source\": \"Weekly allowance\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/missions/log-saving",
+							"host": ["{{baseUrl}}"],
+							"path": ["missions", "log-saving"]
+						},
+						"description": "Log a saving entry"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Expenses",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/missions/expenses",
+							"host": ["{{baseUrl}}"],
+							"path": ["missions", "expenses"]
+						},
+						"description": "Get user's expense history"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Savings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/missions/savings",
+							"host": ["{{baseUrl}}"],
+							"path": ["missions", "savings"]
+						},
+						"description": "Get user's savings history"
+					},
+					"response": []
+				}
+			],
+			"description": "Daily missions and financial tracking"
+		},
+		{
+			"name": "Tamagotchi",
+			"item": [
+				{
+					"name": "Get Tamagotchi",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tamagotchi",
+							"host": ["{{baseUrl}}"],
+							"path": ["tamagotchi"]
+						},
+						"description": "Get user's tamagotchi status"
+					},
+					"response": []
+				},
+				{
+					"name": "Feed Tamagotchi",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"foodId\": \"{{foodId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tamagotchi/feed",
+							"host": ["{{baseUrl}}"],
+							"path": ["tamagotchi", "feed"]
+						},
+						"description": "Feed tamagotchi with food from inventory"
+					},
+					"response": []
+				}
+			],
+			"description": "Tamagotchi care and management"
+		},
+		{
+			"name": "Goals",
+			"item": [
+				{
+					"name": "Create Goal",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('goalId', response.goalId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Save for a new bicycle\",\n  \"targetAmount\": 150.00,\n  \"description\": \"I want to buy a cool mountain bike\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/goals",
+							"host": ["{{baseUrl}}"],
+							"path": ["goals"]
+						},
+						"description": "Create a new savings goal"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Goals",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/goals",
+							"host": ["{{baseUrl}}"],
+							"path": ["goals"]
+						},
+						"description": "Get all user's goals"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Goals",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/goals/active",
+							"host": ["{{baseUrl}}"],
+							"path": ["goals", "active"]
+						},
+						"description": "Get active (incomplete) goals"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Completed Goals",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/goals/completed",
+							"host": ["{{baseUrl}}"],
+							"path": ["goals", "completed"]
+						},
+						"description": "Get completed goals"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Progress to Goal",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 10.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/goals/{{goalId}}/progress",
+							"host": ["{{baseUrl}}"],
+							"path": ["goals", "{{goalId}}", "progress"]
+						},
+						"description": "Add progress to a goal"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Goal",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/goals/{{goalId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["goals", "{{goalId}}"]
+						},
+						"description": "Delete a goal"
+					},
+					"response": []
+				}
+			],
+			"description": "Savings goals management"
+		},
+		{
+			"name": "Adventures",
+			"item": [
+				{
+					"name": "Generate Adventure",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('adventureId', response.adventureId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"context\": \"I want to learn about saving money\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/adventure/generate",
+							"host": ["{{baseUrl}}"],
+							"path": ["adventure", "generate"]
+						},
+						"description": "Generate a new AI-powered money adventure"
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Choice",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"adventureId\": \"{{adventureId}}\",\n  \"choiceIndex\": 0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/adventure/submit-choice",
+							"host": ["{{baseUrl}}"],
+							"path": ["adventure", "submit-choice"]
+						},
+						"description": "Submit a choice for evaluation"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Adventure",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/adventure/{{adventureId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["adventure", "{{adventureId}}"]
+						},
+						"description": "Get a specific adventure by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Adventure History",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/adventure",
+							"host": ["{{baseUrl}}"],
+							"path": ["adventure"]
+						},
+						"description": "Get user's adventure history"
+					},
+					"response": []
+				}
+			],
+			"description": "AI-powered money adventures"
+		},
+		{
+			"name": "AI Service",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{aiServiceUrl}}/health",
+							"host": ["{{aiServiceUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Check AI service health"
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Adventure (Direct)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_age\": 10,\n  \"allowance\": 10.0,\n  \"goal_context\": \"Saving for a new bicycle\",\n  \"recent_activities\": [\"Logged expense: candy $2\"]\n}"
+						},
+						"url": {
+							"raw": "{{aiServiceUrl}}/v1/adventure/generate",
+							"host": ["{{aiServiceUrl}}"],
+							"path": ["v1", "adventure", "generate"]
+						},
+						"description": "Direct call to AI service for adventure generation"
+					},
+					"response": []
+				},
+				{
+					"name": "Evaluate Choice (Direct)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"scenario\": \"You found $5 on the ground! What do you do?\",\n  \"choice_index\": 0,\n  \"choice_text\": \"Save it for your bicycle goal\",\n  \"user_age\": 10,\n  \"amounts\": {\"found_money\": 5.0}\n}"
+						},
+						"url": {
+							"raw": "{{aiServiceUrl}}/v1/adventure/evaluate",
+							"host": ["{{aiServiceUrl}}"],
+							"path": ["v1", "adventure", "evaluate"]
+						},
+						"description": "Direct call to AI service for choice evaluation"
+					},
+					"response": []
+				}
+			],
+			"description": "Direct AI service endpoints (for testing)"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "aiServiceUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}

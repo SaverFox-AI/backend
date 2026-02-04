@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: SaverFox AI Service
+  description: |
+    AI service for generating money adventure scenarios and evaluating player choices.
+    
+    This service provides:
+    - Indonesian language money adventure generation for children
+    - LLM-based evaluation of financial decisions
+    - Opik tracing for observability
+    - Support for OpenAI and Gemini LLM providers
+    
+    **Story Requirements:**
+    - Child-friendly Indonesian language
+    - Maximum 60 words per story
+    - Gentle guidance without lecturing
+    - No PII requests (name, address, school)
+    - No adult topics (loans, credit cards, complex investments)
+    
+    **Evaluation Metrics:**
+    - age_appropriateness (0.0-1.0): How suitable is the decision for the child's age?
+    - goal_alignment (0.0-1.0): How well does it align with their savings goals?
+    - financial_reasoning (0.0-1.0): Quality of financial reasoning shown
+  version: 1.0.0
+  contact:
+    name: SaverFox Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: https://api.saverfox.com/api
+    description: Production server
+
+tags:
+  - name: adventure
+    description: Money adventure generation and evaluation endpoints
+  - name: health
+    description: Health check endpoints
+
+paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Returns service information and health status
+      tags:
+        - health
+      responses:
+        '200':
+          description: Service information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                    example: SaverFox AI Service
+                  version:
+                    type: string
+                    example: 1.0.0
+                  status:
+                    type: string
+                    example: healthy
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status
+      tags:
+        - health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+
+  /api/adventure/generate:
+    post:
+      summary: Generate money adventure scenario
+      description: |
+        Generates a contextual money adventure scenario in Indonesian based on user context.
+        
+        The scenario will be:
+        - Written in child-friendly Indonesian
+        - Maximum 60 words
+        - Age-appropriate for the specified user age
+        - Related to their allowance and goals
+        - Include 3 distinct choice options
+        
+        The operation is traced with Opik for observability.
+      tags:
+        - adventure
+      operationId: generateAdventure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAdventureRequest'
+            examples:
+              basic:
+                summary: Basic generation request
+                value:
+                  user_age: 10
+                  allowance: 70000.0
+              with_goal:
+                summary: With savings goal
+                value:
+                  user_age: 12
+                  allowance: 100000.0
+                  goal_context: "Menabung untuk sepeda baru"
+              with_activities:
+                summary: With recent activities
+                value:
+                  user_age: 8
+                  allowance: 50000.0
+                  goal_context: "Menabung untuk mainan"
+                  recent_activities:
+                    - "Mencatat pengeluaran: jajan Rp 5.000"
+                    - "Memberi makan tamagotchi"
+      responses:
+        '200':
+          description: Successfully generated scenario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateAdventureResponse'
+              examples:
+                success:
+                  summary: Successful generation
+                  value:
+                    scenario: "Kamu menemukan uang Rp 10.000 di jalan! Apa yang akan kamu lakukan?"
+                    choices:
+                      - "Menabung untuk tujuan sepeda"
+                      - "Membeli jajan favorit"
+                      - "Memberikan setengahnya untuk amal"
+                    opik_trace_id: "trace_abc123xyz"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Invalid age
+                  value:
+                    status_code: 400
+                    message: "Validation error"
+                    error: "Bad Request"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    path: "/api/adventure/generate"
+                    validation_errors:
+                      - field: "user_age"
+                        message: "Must be between 5 and 18"
+        '422':
+          description: Failed to generate valid scenario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/adventure/evaluate:
+    post:
+      summary: Evaluate player choice
+      description: |
+        Evaluates a player's choice in a money adventure scenario and provides feedback in Indonesian.
+        
+        Uses LLM-as-judge approach to evaluate the decision across three dimensions:
+        - age_appropriateness: How suitable for the child's age
+        - goal_alignment: How well it aligns with savings goals
+        - financial_reasoning: Quality of financial thinking
+        
+        The operation is traced with Opik and scores are logged for analytics.
+      tags:
+        - adventure
+      operationId: evaluateChoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateChoiceRequest'
+            examples:
+              basic:
+                summary: Basic evaluation
+                value:
+                  scenario: "Kamu menemukan uang Rp 10.000 di jalan!"
+                  choice_index: 0
+                  choice_text: "Menabung untuk tujuan sepeda"
+                  user_age: 10
+              with_amounts:
+                summary: With monetary amounts
+                value:
+                  scenario: "Temanmu mengajak jajan es krim seharga Rp 8.000"
+                  choice_index: 1
+                  choice_text: "Menolak dan menabung uangnya"
+                  user_age: 12
+                  amounts:
+                    expense: 8000.0
+                    saving: 8000.0
+      responses:
+        '200':
+          description: Successfully evaluated choice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateChoiceResponse'
+              examples:
+                success:
+                  summary: Successful evaluation
+                  value:
+                    feedback: "Pilihan yang bagus! Menabung untuk tujuanmu menunjukkan perencanaan yang baik. Kamu berpikir tentang masa depan!"
+                    scores:
+                      age_appropriateness: 0.9
+                      goal_alignment: 0.95
+                      financial_reasoning: 0.85
+                    opik_trace_id: "trace_def456uvw"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Failed to evaluate choice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    GenerateAdventureRequest:
+      type: object
+      required:
+        - user_age
+        - allowance
+      properties:
+        user_age:
+          type: integer
+          minimum: 5
+          maximum: 18
+          description: User's age (5-18 years)
+          example: 10
+        allowance:
+          type: number
+          format: float
+          minimum: 0
+          exclusiveMinimum: true
+          description: User's weekly allowance in Rupiah
+          example: 70000.0
+        goal_context:
+          type: string
+          nullable: true
+          description: User's current savings goal context
+          example: "Menabung untuk sepeda baru"
+        recent_activities:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of recent user activities for context
+          example:
+            - "Mencatat pengeluaran: jajan Rp 5.000"
+            - "Memberi makan tamagotchi"
+
+    GenerateAdventureResponse:
+      type: object
+      required:
+        - scenario
+        - choices
+        - opik_trace_id
+      properties:
+        scenario:
+          type: string
+          description: The generated adventure scenario text in Indonesian (max 60 words)
+          example: "Kamu menemukan uang Rp 10.000 di jalan! Apa yang akan kamu lakukan?"
+        choices:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          description: List of choice options for the player
+          example:
+            - "Menabung untuk tujuan sepeda"
+            - "Membeli jajan favorit"
+            - "Memberikan setengahnya untuk amal"
+        opik_trace_id:
+          type: string
+          description: Opik trace ID for observability
+          example: "trace_abc123xyz"
+
+    EvaluateChoiceRequest:
+      type: object
+      required:
+        - scenario
+        - choice_index
+        - choice_text
+        - user_age
+      properties:
+        scenario:
+          type: string
+          description: The adventure scenario text
+          example: "Kamu menemukan uang Rp 10.000 di jalan!"
+        choice_index:
+          type: integer
+          minimum: 0
+          description: Index of the selected choice (0-based)
+          example: 0
+        choice_text:
+          type: string
+          description: Text of the selected choice
+          example: "Menabung untuk tujuan sepeda"
+        user_age:
+          type: integer
+          minimum: 5
+          maximum: 18
+          description: User's age (5-18 years)
+          example: 10
+        amounts:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: number
+            format: float
+          description: Relevant monetary amounts in the scenario
+          example:
+            found_money: 10000.0
+            expense: 5000.0
+            saving: 5000.0
+
+    Scores:
+      type: object
+      required:
+        - age_appropriateness
+        - goal_alignment
+        - financial_reasoning
+      properties:
+        age_appropriateness:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Score for age appropriateness of the decision (0-1)
+          example: 0.9
+        goal_alignment:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Score for alignment with user's savings goals (0-1)
+          example: 0.95
+        financial_reasoning:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Score for quality of financial reasoning (0-1)
+          example: 0.85
+
+    EvaluateChoiceResponse:
+      type: object
+      required:
+        - feedback
+        - scores
+        - opik_trace_id
+      properties:
+        feedback:
+          type: string
+          description: Feedback text in Indonesian for the player's choice (2-3 sentences)
+          example: "Pilihan yang bagus! Menabung untuk tujuanmu menunjukkan perencanaan yang baik."
+        scores:
+          $ref: '#/components/schemas/Scores'
+        opik_trace_id:
+          type: string
+          description: Opik trace ID for observability
+          example: "trace_def456uvw"
+
+    ErrorResponse:
+      type: object
+      required:
+        - status_code
+        - message
+        - error
+        - timestamp
+        - path
+      properties:
+        status_code:
+          type: integer
+          description: HTTP status code
+          example: 400
+        message:
+          type: string
+          description: Error message
+          example: "Validation error"
+        error:
+          type: string
+          description: Error type
+          example: "Bad Request"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO timestamp of the error
+          example: "2024-01-15T10:30:00Z"
+        path:
+          type: string
+          description: Request path that caused the error
+          example: "/v1/adventure/generate"
+        validation_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field name that failed validation
+                example: "user_age"
+              message:
+                type: string
+                description: Validation error message
+                example: "Must be between 5 and 18"
+          nullable: true
+          description: Field-level validation errors
