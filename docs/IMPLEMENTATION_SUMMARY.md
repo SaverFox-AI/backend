@@ -1,278 +1,447 @@
-# AI Service Implementation Summary
+# AI Coach Agent Implementation Summary
 
-## Tasks Completed: 11-15
+## Overview
 
-### Task 11: Set up AI service project structure ✅
+Successfully implemented the SaverFox AI Coach Agent (apps/ai-python) with FastAPI, featuring Indonesian language support, multi-LLM provider abstraction, and comprehensive Opik tracing.
 
-#### 11.1 Create FastAPI application with configuration ✅
-- **File**: `src/main.py`
-- **Features**:
-  - FastAPI application with lifespan management
-  - CORS middleware configured
-  - Health check endpoints (/, /health)
-  - Logging configuration
-  - Router integration
+## ✅ Completed Features
 
-- **File**: `src/config.py`
-- **Features**:
-  - Pydantic Settings for environment configuration
-  - OpenAI settings (API key, model, temperature, max tokens)
-  - Opik settings (API key, project name, workspace)
-  - CORS settings
-  - Server settings (host, port)
+### 1. FastAPI Application Structure
 
-#### 11.2 Integrate Opik SDK ✅
-- **File**: `src/opik_tracer.py`
-- **Features**:
-  - OpikTracer class for managing traces
-  - Opik client initialization with configuration
-  - Decorator for tracing operations
-  - Feedback logging for scores
-  - Support for both async and sync functions
+**Files Created/Updated:**
+- `src/main.py` - FastAPI app with lifespan management, CORS, middleware, exception handlers
+- `src/routers/adventure.py` - POST /v1/adventure/generate and /v1/adventure/evaluate endpoints
+- `src/config.py` - Configuration management with Pydantic Settings
+- `src/models.py` - Request/response models with validation
 
-#### 11.3 Create Pydantic models for requests and responses ✅
-- **File**: `src/models.py`
-- **Models Implemented**:
-  1. `GenerateAdventureRequest`
-     - user_age (5-18 validation)
-     - allowance (positive validation)
-     - goal_context (optional)
-     - recent_activities (optional)
-  
-  2. `GenerateAdventureResponse`
-     - scenario (required)
-     - choices (min 2 validation)
-     - opik_trace_id (required)
-  
-  3. `EvaluateChoiceRequest`
-     - scenario (required)
-     - choice_index (non-negative validation)
-     - choice_text (required)
-     - user_age (5-18 validation)
-     - amounts (optional)
-  
-  4. `Scores`
-     - financial_wisdom (0-1 validation)
-     - long_term_thinking (0-1 validation)
-     - responsibility (0-1 validation)
-  
-  5. `EvaluateChoiceResponse`
-     - feedback (required)
-     - scores (required)
-     - opik_trace_id (required)
-  
-  6. `ErrorResponse`
-     - Consistent error format with validation errors
+**Key Features:**
+- ✅ Automatic OpenAPI documentation at /docs and /redoc
+- ✅ Health check endpoints (/, /health)
+- ✅ Structured logging with context
+- ✅ Lifespan events for startup/shutdown
 
-### Task 12: Implement AI service adventure generation ✅
+### 2. LLM Provider Abstraction
 
-#### 12.1 Implement ScenarioGenerator ✅
-- **File**: `src/scenario_generator.py`
-- **Features**:
-  - AsyncOpenAI client integration
-  - Context-aware prompt building
-  - Age-appropriate scenario generation
-  - JSON response parsing
-  - Error handling for LLM failures
-  - Logging for observability
+**File Created:**
+- `src/llm_provider.py` - Abstract LLM interface with OpenAI and Gemini implementations
 
-#### 12.2 Implement generation endpoint with Opik tracing ✅
-- **File**: `src/routers/adventure.py`
-- **Endpoint**: `POST /v1/adventure/generate`
-- **Features**:
-  - @track decorator for Opik tracing
-  - Request validation via Pydantic
-  - Scenario generation with user context
-  - Trace ID generation and return
-  - Comprehensive error handling (422, 500)
-  - Metadata logging
+**Supported Providers:**
+- ✅ **OpenAI** (gpt-4, gpt-4-turbo-preview, etc.)
+- ✅ **Google Gemini** (gemini-pro)
 
-### Task 13: Implement AI service adventure evaluation ✅
+**Configuration:**
+```env
+LLM_PROVIDER=openai  # or "gemini"
+OPENAI_API_KEY=...   # if using OpenAI
+GEMINI_API_KEY=...   # if using Gemini
+```
 
-#### 13.1 Implement ChoiceEvaluator ✅
-- **File**: `src/choice_evaluator.py`
-- **Features**:
-  - AsyncOpenAI client integration
-  - Educational feedback generation
-  - Multi-dimensional scoring (financial_wisdom, long_term_thinking, responsibility)
-  - Age-appropriate evaluation
-  - JSON response parsing with score validation
-  - Error handling for LLM failures
+**Features:**
+- Factory pattern for provider selection
+- Consistent interface across providers
+- Easy to extend with new providers
+- Automatic error handling
 
-#### 13.2 Implement evaluation endpoint with Opik tracing ✅
-- **File**: `src/routers/adventure.py`
-- **Endpoint**: `POST /v1/adventure/evaluate`
-- **Features**:
-  - @track decorator for Opik tracing
-  - Request validation via Pydantic
-  - Choice evaluation with feedback
-  - Score calculation and validation
-  - Trace ID generation and return
-  - Comprehensive error handling (422, 500)
-  - Score metadata logging
+### 3. Indonesian Language Support
 
-### Task 14: Implement AI service error handling ✅
+**Files Updated:**
+- `src/scenario_generator.py` - Indonesian prompts for scenario generation
+- `src/choice_evaluator.py` - Indonesian prompts for evaluation
 
-#### 14.1 Create validation middleware ✅
-- **File**: `src/middleware.py`
-- **Features**:
-  - ValidationMiddleware class
-  - Request/response logging
-  - Error propagation
-  - Debug information logging
+**Story Requirements Implemented:**
+- ✅ Child-friendly Indonesian language
+- ✅ Maximum 60 words per story (enforced in prompts)
+- ✅ Gentle guidance without lecturing
+- ✅ No PII requests (name, address, school)
+- ✅ No adult topics (loans, credit cards, complex investments)
+- ✅ Focus on everyday situations (jajan, menabung, berbagi)
 
-#### 14.2 Create global exception handler ✅
-- **File**: `src/exception_handlers.py`
-- **Handlers Implemented**:
-  1. `validation_exception_handler`
-     - Handles Pydantic validation errors
-     - Returns 400 with field-level errors
-     - Consistent error format
-  
-  2. `http_exception_handler`
-     - Handles FastAPI HTTP exceptions
-     - Maps status codes to error names
-     - Logs errors with context
-  
-  3. `general_exception_handler`
-     - Catches unexpected exceptions
-     - Returns 500 with safe error message
-     - Full error logging with stack trace
+**Example Prompts:**
+```
+System: "Kamu adalah pendidik literasi keuangan yang membuat cerita 
+petualangan uang untuk anak-anak Indonesia."
 
-- **Error Response Format**:
-  - status_code
-  - message
-  - error (human-readable name)
-  - timestamp (ISO format)
-  - path
-  - validation_errors (optional, for 400 errors)
+Rules:
+- Gunakan bahasa Indonesia yang ramah anak
+- Cerita maksimal 60 kata
+- Berikan panduan lembut tanpa menggurui
+- JANGAN meminta informasi pribadi
+- JANGAN gunakan topik dewasa
+```
 
-### Task 15: Checkpoint - Ensure AI service tests pass ✅
+### 4. Evaluation System (LLM-as-Judge)
 
-#### Tests Created:
-1. **test_models.py** - Model validation tests
-   - GenerateAdventureRequest validation
-   - GenerateAdventureResponse validation
-   - EvaluateChoiceRequest validation
-   - Scores validation
-   - EvaluateChoiceResponse validation
-   - Edge cases (negative values, out of range, missing fields)
+**Updated Metrics:**
+- ✅ `age_appropriateness` (0.0-1.0) - How suitable for child's age
+- ✅ `goal_alignment` (0.0-1.0) - Alignment with savings goals
+- ✅ `financial_reasoning` (0.0-1.0) - Quality of financial thinking
 
-2. **test_api.py** - API endpoint tests
-   - Health check endpoints
-   - Generate adventure endpoint (success and error cases)
-   - Evaluate choice endpoint (success and error cases)
-   - Error handling (404, 405)
-   - Request validation
+**Previous Metrics (Replaced):**
+- ❌ financial_wisdom
+- ❌ long_term_thinking
+- ❌ responsibility
 
-3. **conftest.py** - Test fixtures
-   - Test client fixture
-   - Mock OpenAI responses
-   - Test environment setup
+**Evaluation Approach:**
+- LLM-as-judge methodology
+- Structured JSON output with scores
+- Encouraging, non-judgmental feedback
+- Age-appropriate language
 
-#### Test Infrastructure:
-- pytest configuration in pyproject.toml
-- Test markers (property, unit, integration)
-- Coverage reporting setup
-- Test runner scripts (run_tests.sh, run_tests.bat)
+### 5. Opik SDK Integration
 
-## Requirements Validated
+**Files Updated:**
+- `src/routers/adventure.py` - Enhanced tracing with proper metadata
+- `src/opik_tracer.py` - Opik utilities (existing)
 
-### Requirement 8: Money Adventure Generation ✅
-- 8.1: AI service generates contextual scenarios ✅
-- 8.2: Opik traces created with metadata ✅
-- 8.3: Returns scenario, choices, and trace ID ✅
-- 8.5: Request validation ✅
+**Generation Trace:**
+```python
+Trace Name: "saverfox.money_adventure.generate"
+Metadata:
+  - user_age: int
+  - allowance_daily: float (calculated from weekly)
+  - goal_context: str
+  - recent_activities: list
+  - language: "indonesian"
+  - max_story_words: 60
+Tags: ["generation", "indonesian", "age_{user_age}"]
+Output: {scenario, choices, word_count}
+```
 
-### Requirement 9: Money Adventure Evaluation ✅
-- 9.1: AI service evaluates choices ✅
-- 9.2: Opik traces created with evaluation data ✅
-- 9.3: Returns feedback, scores, and trace ID ✅
-- 9.5: Request validation ✅
+**Evaluation Trace:**
+```python
+Trace Name: "saverfox.money_adventure.evaluate"
+Metadata:
+  - user_age: int
+  - choice: str
+  - choice_index: int
+  - expense_amount: float
+  - saving_amount: float
+  - goal_name: str
+  - language: "indonesian"
+  - evaluation_method: "llm_as_judge"
+Tags: ["evaluation", "indonesian", "age_{user_age}"]
+Output: {feedback, scores}
+Feedback Scores: age_appropriateness, goal_alignment, financial_reasoning
+```
 
-### Requirement 12: Request Validation and Error Handling ✅
-- 12.2: AI service validates requests ✅
-- 12.3: Returns 400 with field-level errors ✅
-- 12.4: Consistent error response format ✅
-- 12.5: Appropriate HTTP status codes ✅
+**Features:**
+- ✅ Trace IDs returned in all responses
+- ✅ Comprehensive metadata attachment
+- ✅ LLM input/output logging
+- ✅ Evaluation metrics logged as feedback scores
+- ✅ Tags for filtering and analysis
 
-### Requirement 13: Observability and Tracing ✅
-- 13.1: Opik integration for all operations ✅
-- 13.2: Metadata attached to traces ✅
-- 13.3: Trace IDs returned in responses ✅
-- 13.5: Evaluation metrics logged ✅
+### 6. Request/Response Models
 
-### Requirement 15: Project Structure and Configuration ✅
-- 15.3: pyproject.toml with dependencies ✅
-- 15.4: .env.example with configuration ✅
-- 15.5: README with setup instructions ✅
+**Updated Models (src/models.py):**
 
-## File Structure
+```python
+class GenerateAdventureRequest:
+    user_age: int (5-18)
+    allowance: float (weekly, in Rupiah)
+    goal_context: Optional[str]
+    recent_activities: Optional[list[str]]
+
+class GenerateAdventureResponse:
+    scenario: str (Indonesian, max 60 words)
+    choices: list[str] (min 2)
+    opik_trace_id: str
+
+class EvaluateChoiceRequest:
+    scenario: str
+    choice_index: int (0-based)
+    choice_text: str
+    user_age: int (5-18)
+    amounts: Optional[dict[str, float]]
+
+class Scores:
+    age_appropriateness: float (0.0-1.0)
+    goal_alignment: float (0.0-1.0)
+    financial_reasoning: float (0.0-1.0)
+
+class EvaluateChoiceResponse:
+    feedback: str (Indonesian, 2-3 sentences)
+    scores: Scores
+    opik_trace_id: str
+```
+
+**Validation:**
+- ✅ Pydantic field validators
+- ✅ Age range validation (5-18)
+- ✅ Positive allowance validation
+- ✅ Score range validation (0.0-1.0)
+- ✅ Minimum choices validation (≥2)
+
+### 7. Error Handling
+
+**Files:**
+- `src/exception_handlers.py` - Global exception handlers
+- `src/middleware.py` - Validation middleware
+
+**Error Response Format:**
+```json
+{
+  "status_code": 400,
+  "message": "Validation error",
+  "error": "Bad Request",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "path": "/v1/adventure/generate",
+  "validation_errors": [
+    {"field": "user_age", "message": "Must be between 5 and 18"}
+  ]
+}
+```
+
+**HTTP Status Codes:**
+- 200: Success
+- 400: Bad Request (validation)
+- 422: Unprocessable Entity (business logic)
+- 500: Internal Server Error
+
+### 8. Configuration Files
+
+**Created/Updated:**
+
+1. **`.env.example`** - Complete environment variable template
+   - LLM provider selection
+   - OpenAI configuration
+   - Gemini configuration
+   - Opik configuration
+   - CORS settings
+
+2. **`openapi.yaml`** - Complete OpenAPI 3.0 specification
+   - All endpoints documented
+   - Request/response schemas
+   - Examples for all operations
+   - Error responses
+   - Indonesian language examples
+
+3. **`pyproject.toml`** - Updated dependencies
+   - Added `google-generativeai` for Gemini support
+   - Existing dependencies maintained
+
+4. **`README.md`** - Comprehensive documentation
+   - Setup instructions
+   - API endpoint documentation
+   - LLM provider configuration
+   - Opik tracing details
+   - Indonesian language examples
+   - Development guidelines
+
+## 🎯 Requirements Met
+
+### Story Requirements
+- ✅ Child-friendly Indonesian language
+- ✅ Stories ≤ 60 words
+- ✅ Gentle guidance without lecturing
+- ✅ No PII requests
+- ✅ No adult topics
+
+### Technical Requirements
+- ✅ FastAPI app structure with routers
+- ✅ POST /v1/adventure/generate endpoint
+- ✅ POST /v1/adventure/evaluate endpoint
+- ✅ LLM provider abstraction (OpenAI + Gemini)
+- ✅ Opik SDK integration with proper tracing
+- ✅ Trace names: saverfox.money_adventure.{generate|evaluate}
+- ✅ Metadata: user_age, allowance_daily, choice, expense_amount, saving_amount, goal_name
+- ✅ LLM input/output logging
+- ✅ opik_trace_id in responses
+
+### Evaluation System
+- ✅ LLM-as-judge approach
+- ✅ age_appropriateness metric (0.0-1.0)
+- ✅ goal_alignment metric (0.0-1.0)
+- ✅ financial_reasoning metric (0.0-1.0)
+
+### Documentation
+- ✅ .env.example with all variables
+- ✅ openapi.yaml specification
+- ✅ Comprehensive README
+- ✅ Pydantic models for validation
+
+## 📁 File Structure
 
 ```
 backend/apps/ai-python/
 ├── src/
 │   ├── __init__.py
-│   ├── main.py                    # FastAPI app entry point
-│   ├── config.py                  # Configuration management
-│   ├── models.py                  # Pydantic models
-│   ├── scenario_generator.py     # LLM scenario generation
-│   ├── choice_evaluator.py       # LLM choice evaluation
-│   ├── opik_tracer.py            # Opik tracing utilities
-│   ├── middleware.py             # Validation middleware
-│   ├── exception_handlers.py    # Global exception handlers
+│   ├── main.py                    ✅ Updated
+│   ├── config.py                  ✅ Updated
+│   ├── models.py                  ✅ Updated
+│   ├── llm_provider.py            ✅ Created
+│   ├── scenario_generator.py      ✅ Updated
+│   ├── choice_evaluator.py        ✅ Updated
+│   ├── opik_tracer.py             ✅ Existing
+│   ├── middleware.py              ✅ Existing
+│   ├── exception_handlers.py      ✅ Existing
 │   └── routers/
 │       ├── __init__.py
-│       └── adventure.py          # Adventure endpoints
+│       └── adventure.py           ✅ Updated
 ├── tests/
 │   ├── __init__.py
-│   ├── conftest.py              # Test fixtures
-│   ├── test_models.py           # Model tests
-│   └── test_api.py              # API tests
-├── .env.example                  # Environment template
-├── pyproject.toml               # Dependencies
-├── README.md                    # Documentation
-├── run_tests.sh                 # Test runner (Unix)
-├── run_tests.bat                # Test runner (Windows)
-└── IMPLEMENTATION_SUMMARY.md    # This file
+│   ├── conftest.py
+│   ├── test_models.py
+│   └── test_api.py
+├── .env.example                   ✅ Updated
+├── openapi.yaml                   ✅ Created
+├── pyproject.toml                 ✅ Updated
+├── README.md                      ✅ Updated
+├── IMPLEMENTATION_SUMMARY.md      ✅ Created
+├── Dockerfile                     ✅ Existing
+└── poetry.lock                    ✅ Existing
 ```
 
-## API Endpoints
+## 🚀 Usage Examples
 
-### Health Checks
-- `GET /` - Service info
-- `GET /health` - Health status
+### Generate Indonesian Adventure
 
-### Adventure Operations
-- `POST /v1/adventure/generate` - Generate money scenario
-- `POST /v1/adventure/evaluate` - Evaluate player choice
+```bash
+curl -X POST http://localhost:8000/api/adventure/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_age": 10,
+    "allowance": 70000.0,
+    "goal_context": "Menabung untuk sepeda baru"
+  }'
+```
 
-## Key Features
+**Response:**
+```json
+{
+  "scenario": "Kamu menemukan uang Rp 10.000 di jalan! Apa yang akan kamu lakukan?",
+  "choices": [
+    "Menabung untuk tujuan sepeda",
+    "Membeli jajan favorit",
+    "Memberikan setengahnya untuk amal"
+  ],
+  "opik_trace_id": "trace_abc123xyz"
+}
+```
 
-1. **Type Safety**: Full Pydantic validation for all requests/responses
-2. **Observability**: Opik tracing on all AI operations
-3. **Error Handling**: Consistent error responses with field-level validation
-4. **Async/Await**: Fully async implementation for performance
-5. **Configuration**: Environment-based configuration
-6. **Testing**: Comprehensive test suite with fixtures
-7. **Documentation**: OpenAPI/Swagger auto-generated docs
-8. **Logging**: Structured logging throughout
+### Evaluate Choice
 
-## Next Steps (Not in Current Tasks)
+```bash
+curl -X POST http://localhost:8000/api/adventure/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scenario": "Kamu menemukan uang Rp 10.000 di jalan!",
+    "choice_index": 0,
+    "choice_text": "Menabung untuk tujuan sepeda",
+    "user_age": 10,
+    "amounts": {
+      "found_money": 10000.0,
+      "saving": 10000.0,
+      "goal_name": "Sepeda baru"
+    }
+  }'
+```
 
-The following tasks are defined in the spec but not part of tasks 11-15:
-- Task 16: API service adventure orchestration
-- Task 17: API service global error handling
-- Task 18: Generate OpenAPI specifications
-- Task 19: Docker configuration
-- Task 20: Final integration and documentation
+**Response:**
+```json
+{
+  "feedback": "Pilihan yang bagus! Menabung untuk tujuanmu menunjukkan perencanaan yang baik. Kamu berpikir tentang masa depan!",
+  "scores": {
+    "age_appropriateness": 0.9,
+    "goal_alignment": 0.95,
+    "financial_reasoning": 0.85
+  },
+  "opik_trace_id": "trace_def456uvw"
+}
+```
 
-## Notes
+## 🔧 Configuration
 
-- All required subtasks for tasks 11-15 completed
-- Optional test tasks (marked with *) were skipped as instructed
-- Implementation follows design document specifications
-- Ready for integration with TypeScript API service
-- Opik trace IDs are generated and returned for correlation
-- LLM responses are parsed and validated
-- Error handling is comprehensive and consistent
+### Using OpenAI
+
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4-turbo-preview
+```
+
+### Using Gemini
+
+```env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-pro
+```
+
+### Opik Configuration
+
+```env
+OPIK_API_KEY=...
+OPIK_PROJECT_NAME=money-adventures
+OPIK_WORKSPACE=saverfox-ai
+```
+
+## 📊 Opik Tracing
+
+All operations are fully traced with:
+- Unique trace IDs
+- Comprehensive metadata
+- LLM input/output logging
+- Evaluation scores as feedback
+- Tags for filtering
+
+Access traces at: https://www.comet.com/opik
+
+## 🧪 Testing
+
+```bash
+# Install dependencies
+poetry install
+
+# Run tests
+poetry run pytest
+
+# Run with coverage
+poetry run pytest --cov=src --cov-report=html
+
+# Format code
+poetry run black src tests
+poetry run ruff check src tests
+```
+
+## 🐳 Docker
+
+```bash
+# Build
+docker build -t saverfox-ai .
+
+# Run
+docker run -p 8000:8000 --env-file .env saverfox-ai
+```
+
+## 📝 Next Steps
+
+1. **Install dependencies**: `poetry install`
+2. **Configure environment**: Copy `.env.example` to `.env` and add API keys
+3. **Run service**: `poetry run uvicorn src.main:app --reload`
+4. **Test endpoints**: Visit http://localhost:8000/api/docs
+5. **Check Opik traces**: Visit https://www.comet.com/opik
+
+## ✨ Key Improvements
+
+1. **Multi-LLM Support**: Easy switching between OpenAI and Gemini
+2. **Indonesian Language**: Native Indonesian prompts and responses
+3. **Better Metrics**: More relevant evaluation dimensions
+4. **Enhanced Tracing**: Comprehensive Opik metadata and logging
+5. **Complete Documentation**: OpenAPI spec, README, examples
+6. **Safety Features**: No PII, no adult topics, gentle guidance
+7. **Story Length Control**: Enforced 60-word maximum
+
+## 🎉 Summary
+
+The AI Coach Agent is now fully implemented with:
+- ✅ FastAPI application with proper structure
+- ✅ Multi-LLM provider support (OpenAI + Gemini)
+- ✅ Indonesian language scenarios and feedback
+- ✅ LLM-as-judge evaluation system
+- ✅ Comprehensive Opik tracing
+- ✅ Complete documentation and examples
+- ✅ Safety features and content guidelines
+- ✅ Proper error handling and validation
+
+Ready for integration with the TypeScript API service!
