@@ -14,23 +14,64 @@ logger = logging.getLogger(__name__)
 # Type variable for generic function wrapping
 F = TypeVar("F", bound=Callable[..., Any])
 
+# Global flag for Opik availability
+OPIK_ENABLED = False
+
+
+def init_opik() -> bool:
+    """
+    Initialize Opik configuration at startup.
+    
+    Returns:
+        True if Opik is successfully configured, False otherwise
+    """
+    global OPIK_ENABLED
+    
+    if not settings.opik_api_key:
+        logger.warning("OPIK_API_KEY not set, Opik tracing disabled")
+        OPIK_ENABLED = False
+        return False
+    
+    try:
+        opik.configure(
+            api_key=settings.opik_api_key,
+            workspace=settings.opik_workspace,
+        )
+        OPIK_ENABLED = True
+        logger.info(
+            f"✓ Opik configured: workspace={settings.opik_workspace}, "
+            f"project={settings.opik_project_name}"
+        )
+        return True
+    except Exception as e:
+        logger.error(f"✗ Failed to configure Opik: {e}")
+        OPIK_ENABLED = False
+        return False
+
+
+def is_opik_enabled() -> bool:
+    """Check if Opik tracing is enabled."""
+    return OPIK_ENABLED
+
 
 class OpikTracer:
     """Utility class for managing Opik tracing operations."""
     
     def __init__(self) -> None:
         """Initialize Opik client with configuration."""
+        if not OPIK_ENABLED:
+            logger.warning("Opik not configured, tracer will be disabled")
+            self.client = None
+            self.project_name = settings.opik_project_name
+            return
+            
         try:
-            opik.configure(
-                api_key=settings.opik_api_key,
-                workspace=settings.opik_workspace,
-            )
             self.client = opik.Opik()
             self.project_name = settings.opik_project_name
             logger.info(f"Opik client initialized for project: {self.project_name}")
         except Exception as e:
             logger.error(f"Failed to initialize Opik client: {e}")
-            raise
+            self.client = None
     
     def trace_operation(
         self,
@@ -100,6 +141,10 @@ class OpikTracer:
             scores: Dictionary of score names to values
             metadata: Additional metadata to log
         """
+        if not self.client:
+            logger.warning("Opik client not available, skipping feedback logging")
+            return
+            
         try:
             # Log scores as feedback
             for score_name, score_value in scores.items():
@@ -117,5 +162,13 @@ class OpikTracer:
             logger.error(f"Failed to log feedback for trace {trace_id}: {e}")
 
 
-# Global tracer instance
-opik_tracer = OpikTracer()
+# Global tracer instance - will be initialized after init_opik() is called
+opik_tracer: Optional[OpikTracer] = None
+
+
+def get_opik_tracer() -> Optional[OpikTracer]:
+    """Get the global Opik tracer instance."""
+    global opik_tracer
+    if opik_tracer is None and OPIK_ENABLED:
+        opik_tracer = OpikTracer()
+    return opik_tracer

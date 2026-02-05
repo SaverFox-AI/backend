@@ -1,12 +1,12 @@
 """Scenario generation using LLM for money adventures."""
 
-import json
 import logging
 from typing import Optional
 
 from src.config import settings
 from src.models import GenerateAdventureRequest
 from src.llm_provider import get_llm_provider
+from src.json_utils import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -103,29 +103,39 @@ Berikan respons dalam format JSON yang diminta!"""
             Tuple of (scenario text, list of choices)
             
         Raises:
-            ValueError: If LLM response cannot be parsed
+            ValueError: If LLM response cannot be parsed or validation fails
             Exception: If LLM call fails
         """
-        try:
-            daily_allowance = request.allowance / 7
-            logger.info(
-                f"Generating Indonesian scenario for age {request.user_age}, "
-                f"daily allowance Rp {daily_allowance:,.0f}"
-            )
-            
-            # Build prompts
-            system_prompt = self._build_system_prompt()
-            user_prompt = self._build_user_prompt(request)
-            
-            # Call LLM
-            response_text = await self.llm_provider.generate_completion(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-            )
-            
-            # Parse JSON response
+        daily_allowance = request.allowance / 7
+        logger.info(
+            f"Generating Indonesian scenario for age {request.user_age}, "
+            f"daily allowance Rp {daily_allowance:,.0f}"
+        )
+        
+        # Build prompts
+        system_prompt = self._build_system_prompt()
+        user_prompt = self._build_user_prompt(request)
+        
+        # Try generation with retry for word limit
+        max_attempts = 2
+        for attempt in range(max_attempts):
             try:
-                data = json.loads(response_text)
+                # Call LLM
+                response_text = await self.llm_provider.generate_completion(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                )
+                
+                # Extract JSON from response
+                data = extract_json(response_text)
+                if not data:
+                    logger.error("json_parse_failed: Could not extract JSON from LLM response")
+                    if attempt < max_attempts - 1:
+                        logger.info("Retrying with repair prompt...")
+                        user_prompt += "\n\nPERINGATAN: Respons sebelumnya gagal di-parse. Berikan HANYA JSON yang valid tanpa teks tambahan!"
+                        continue
+                    raise ValueError("Failed to extract valid JSON from LLM response")
+                
                 scenario = data.get("scenario", "")
                 choices = data.get("choices", [])
                 
@@ -137,20 +147,32 @@ Berikan respons dalam format JSON yang diminta!"""
                 
                 # Validate story length (60 words max)
                 word_count = len(scenario.split())
-                if word_count > 70:  # Allow some flexibility
-                    logger.warning(f"Story exceeds 60 words: {word_count} words")
+                
+                if word_count > 70:
+                    logger.warning(f"constraint_violation: Story exceeds 60 words ({word_count} words)")
+                    
+                    if attempt < max_attempts - 1:
+                        # Retry with stricter prompt
+                        logger.info("Regenerating with stricter word limit...")
+                        user_prompt += f"\n\nPENTING: Cerita sebelumnya terlalu panjang ({word_count} kata). Buat cerita MAKSIMAL 60 kata!"
+                        continue
+                    else:
+                        # Last attempt - log but accept
+                        logger.error(f"Story still too long after {max_attempts} attempts: {word_count} words")
                 
                 logger.info(
                     f"Successfully generated Indonesian scenario with {len(choices)} choices "
-                    f"({word_count} words)"
+                    f"({word_count} words) on attempt {attempt + 1}"
                 )
                 return scenario, choices
                 
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse LLM response as JSON: {e}")
-                logger.debug(f"Response content: {response_text}")
-                raise ValueError(f"Invalid JSON response from LLM: {e}")
-        
-        except Exception as e:
-            logger.error(f"Failed to generate scenario: {e}")
-            raise
+            except ValueError as e:
+                if attempt < max_attempts - 1:
+                    logger.warning(f"Attempt {attempt + 1} failed: {e}, retrying...")
+                    continue
+                else:
+                    logger.error(f"All {max_attempts} attempts failed")
+                    raise
+            except Exception as e:
+                logger.error(f"Failed to generate scenario: {e}")
+                raise

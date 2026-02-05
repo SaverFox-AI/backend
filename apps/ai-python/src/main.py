@@ -38,7 +38,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info(f"OpenAI Model: {settings.openai_model}")
     elif settings.llm_provider.lower() == "gemini":
         logger.info(f"Gemini Model: {settings.gemini_model}")
-    logger.info(f"Opik Project: {settings.opik_project_name}")
+    
+    # Initialize Opik
+    from src.opik_tracer import init_opik
+    opik_initialized = init_opik()
+    if opik_initialized:
+        logger.info(f"✓ Opik Project: {settings.opik_project_name}")
+    else:
+        logger.warning("⚠ Opik tracing disabled - traces will not be logged")
     
     yield
     

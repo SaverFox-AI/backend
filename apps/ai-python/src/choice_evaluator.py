@@ -1,12 +1,12 @@
 """Choice evaluation using LLM for money adventure decisions."""
 
-import json
 import logging
 from typing import Optional
 
 from src.config import settings
 from src.models import EvaluateChoiceRequest, Scores
 from src.llm_provider import get_llm_provider
+from src.json_utils import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -103,59 +103,63 @@ Berikan respons dalam format JSON yang diminta!"""
             Tuple of (feedback text, scores object)
             
         Raises:
-            ValueError: If LLM response cannot be parsed
+            ValueError: If LLM response cannot be parsed or scores are invalid
             Exception: If LLM call fails
         """
-        try:
-            logger.info(
-                f"Evaluating Indonesian choice for age {request.user_age}: "
-                f"'{request.choice_text[:50]}...'"
-            )
-            
-            # Build prompts
-            system_prompt = self._build_system_prompt()
-            user_prompt = self._build_user_prompt(request)
-            
-            # Call LLM
-            response_text = await self.llm_provider.generate_completion(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-            )
-            
-            # Parse JSON response
-            try:
-                data = json.loads(response_text)
-                feedback = data.get("feedback", "")
-                scores_data = data.get("scores", {})
-                
-                if not feedback or not scores_data:
-                    raise ValueError("Missing feedback or scores in response")
-                
-                # Validate and create Scores object with new metrics
-                scores = Scores(
-                    age_appropriateness=scores_data.get("age_appropriateness", 0.5),
-                    goal_alignment=scores_data.get("goal_alignment", 0.5),
-                    financial_reasoning=scores_data.get("financial_reasoning", 0.5),
-                )
-                
-                logger.info(
-                    f"Successfully evaluated choice with scores: "
-                    f"age={scores.age_appropriateness:.2f}, "
-                    f"goal={scores.goal_alignment:.2f}, "
-                    f"reasoning={scores.financial_reasoning:.2f}"
-                )
-                
-                return feedback, scores
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse LLM response as JSON: {e}")
-                logger.debug(f"Response content: {response_text}")
-                raise ValueError(f"Invalid JSON response from LLM: {e}")
-            
-            except Exception as e:
-                logger.error(f"Failed to create Scores object: {e}")
-                raise ValueError(f"Invalid scores in response: {e}")
+        logger.info(
+            f"Evaluating Indonesian choice for age {request.user_age}: "
+            f"'{request.choice_text[:50]}...'"
+        )
         
-        except Exception as e:
-            logger.error(f"Failed to evaluate choice: {e}")
-            raise
+        # Build prompts
+        system_prompt = self._build_system_prompt()
+        user_prompt = self._build_user_prompt(request)
+        
+        # Call LLM
+        response_text = await self.llm_provider.generate_completion(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        )
+        
+        # Extract JSON from response
+        data = extract_json(response_text)
+        if not data:
+            logger.error("eval_parse_failed: Could not extract JSON from LLM response")
+            raise ValueError("Failed to extract valid JSON from evaluation response")
+        
+        feedback = data.get("feedback", "")
+        scores_data = data.get("scores", {})
+        
+        if not feedback or not scores_data:
+            logger.error("eval_parse_failed: Missing feedback or scores in response")
+            raise ValueError("Missing feedback or scores in response")
+        
+        # Validate and create Scores object
+        # If any score is missing, treat as evaluation failure
+        try:
+            age_app = scores_data.get("age_appropriateness")
+            goal_align = scores_data.get("goal_alignment")
+            fin_reason = scores_data.get("financial_reasoning")
+            
+            if age_app is None or goal_align is None or fin_reason is None:
+                logger.error("eval_parse_failed: Missing score fields")
+                raise ValueError("Missing required score fields")
+            
+            scores = Scores(
+                age_appropriateness=float(age_app),
+                goal_alignment=float(goal_align),
+                financial_reasoning=float(fin_reason),
+            )
+            
+            logger.info(
+                f"Successfully evaluated choice with scores: "
+                f"age={scores.age_appropriateness:.2f}, "
+                f"goal={scores.goal_alignment:.2f}, "
+                f"reasoning={scores.financial_reasoning:.2f}"
+            )
+            
+            return feedback, scores
+            
+        except (ValueError, TypeError) as e:
+            logger.error(f"eval_parse_failed: Invalid scores in response: {e}")
+            raise ValueError(f"Invalid scores in response: {e}")
