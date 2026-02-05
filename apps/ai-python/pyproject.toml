@@ -5,6 +5,7 @@ description = "SaverFox AI Backend - Python AI Service"
 authors = ["SaverFox Team"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
