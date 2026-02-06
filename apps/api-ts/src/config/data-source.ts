@@ -16,8 +16,8 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DB_USERNAME || 'saverfox',
   password: process.env.DB_PASSWORD || 'saverfox_password',
   database: process.env.DB_DATABASE || 'saverfox_db',
-  entities: [join(__dirname, '..', '**', '*.entity{.ts,.js}')],
-  migrations: [join(__dirname, '..', 'database', 'migrations', '*{.ts,.js}')],
+  entities: [join(__dirname, '..', '**', '*.entity.js')],
+  migrations: [join(__dirname, '..', 'database', 'migrations', '*.js')],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
   

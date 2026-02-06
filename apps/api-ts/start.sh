@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Running database migrations..."
-npm run migration:run || echo "Migration failed or already applied"
-
 echo "Starting application..."
+echo "Migrations will run automatically via TypeORM"
 npm run start:prod

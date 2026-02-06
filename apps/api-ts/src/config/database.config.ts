@@ -10,8 +10,8 @@ export default registerAs(
     username: process.env.DB_USERNAME || 'saverfox',
     password: process.env.DB_PASSWORD || 'saverfox_password',
     database: process.env.DB_DATABASE || 'saverfox_db',
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
+    entities: [__dirname + '/../**/*.entity.js'],
+    migrations: [__dirname + '/../database/migrations/*.js'],
     synchronize: false, // Always use migrations in production
     logging: process.env.NODE_ENV === 'development',
     
