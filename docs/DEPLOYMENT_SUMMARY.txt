@@ -1,0 +1,129 @@
+=== SAVERFOX RENDER DEPLOYMENT - QUICK START ===
+
+📦 FILES CREATED:
+✅ requirements.txt - Python dependencies
+✅ Dockerfile.render - Docker configs (both services)
+✅ render-build.sh - Build scripts
+✅ start.sh - Startup script with migrations
+✅ health.controller.ts - Health check endpoint
+✅ RENDER_DEPLOY.txt - Detailed deployment guide
+✅ ENV_VARIABLES_RENDER.txt - Environment variables reference
+✅ deploy-to-render.sh - Deployment helper script
+✅ test-deployment.sh - Post-deployment testing
+
+🔧 FIXES APPLIED:
+✅ Fixed API endpoint paths (/v1 → /api)
+✅ Added health endpoints for both services
+✅ Fixed migration script to use compiled JS
+✅ Added startup script with migration runner
+✅ Created requirements.txt for Python service
+
+📋 DEPLOYMENT CHECKLIST:
+
+□ 1. Prepare API Keys
+   - OpenAI API key
+   - Opik API key
+   - Generate JWT secret (32+ chars)
+
+□ 2. Push to GitHub
+   git add .
+   git commit -m "Add Render deployment config"
+   git push origin main
+
+□ 3. Create PostgreSQL Database on Render
+   - Name: saverfox-db
+   - Region: Singapore
+   - Save connection details
+
+□ 4. Deploy AI Python Service
+   - Root: backend/apps/ai-python
+   - Build: pip install -r requirements.txt
+   - Start: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+   - Add environment variables (see ENV_VARIABLES_RENDER.txt)
+   - Save service URL
+
+□ 5. Deploy API TypeScript Service
+   - Root: backend/apps/api-ts
+   - Build: npm install && npm run build
+   - Start: sh start.sh
+   - Add environment variables (see ENV_VARIABLES_RENDER.txt)
+   - Use AI service URL from step 4
+
+□ 6. Test Deployment
+   ./test-deployment.sh <AI_URL> <API_URL>
+
+🔗 IMPORTANT URLS:
+
+After deployment, you'll have:
+- AI Service: https://saverfox-ai-python.onrender.com
+- API Service: https://saverfox-api-ts.onrender.com
+- API Docs: https://saverfox-api-ts.onrender.com/api/docs
+
+📝 ENDPOINTS:
+
+AI Service:
+- GET  /health
+- POST /api/adventure/generate
+- POST /api/adventure/evaluate
+
+API Service:
+- GET  /api/health
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/adventure/generate
+- POST /api/adventure/submit-choice
+- GET  /api/docs (Swagger UI)
+
+⚠️ COMMON ISSUES:
+
+1. "Service Unavailable" on first request
+   → Free tier services sleep after 15min
+   → Wait 30-60s for cold start
+
+2. "Database connection failed"
+   → Use INTERNAL database URL
+   → Check credentials in env vars
+
+3. "AI Service timeout"
+   → Check AI service is running
+   → Verify AI_SERVICE_URL is correct
+   → Check OPENAI_API_KEY is valid
+
+4. "Migration failed"
+   → Run manually: npm run migration:run
+   → Check database connection
+   → Verify DB credentials
+
+5. Build fails
+   → Check logs in Render dashboard
+   → Verify all dependencies exist
+   → Check Node/Python versions
+
+📚 DETAILED GUIDES:
+
+- Full deployment: cat RENDER_DEPLOY.txt
+- Environment vars: cat ENV_VARIABLES_RENDER.txt
+- Run helper: ./deploy-to-render.sh
+- Test services: ./test-deployment.sh <AI_URL> <API_URL>
+
+🎯 NEXT STEPS AFTER DEPLOYMENT:
+
+1. Test health endpoints
+2. Register a test user
+3. Create a profile
+4. Generate an adventure
+5. Submit a choice
+6. Check Opik dashboard for traces
+
+💡 TIPS:
+
+- Keep service URLs handy
+- Monitor logs during first deployment
+- Test each service independently first
+- Use Postman collection for API testing
+- Check Opik dashboard for AI traces
+
+🚀 READY TO DEPLOY!
+
+Run: ./deploy-to-render.sh
+Then follow: RENDER_DEPLOY.txt

@@ -90,7 +90,7 @@ export class AIServiceClient {
         );
 
         const response = await this.client.post<GenerateAdventureResponse>(
-          '/v1/adventure/generate',
+          '/api/adventure/generate',
           request,
         );
 
@@ -122,7 +122,7 @@ export class AIServiceClient {
         );
 
         const response = await this.client.post<EvaluateChoiceResponse>(
-          '/v1/adventure/evaluate',
+          '/api/adventure/evaluate',
           request,
         );
 

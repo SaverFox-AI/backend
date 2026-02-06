@@ -9,6 +9,7 @@ import { MissionModule } from './mission/mission.module';
 import { TamagotchiModule } from './tamagotchi/tamagotchi.module';
 import { GoalModule } from './goal/goal.module';
 import { AdventureModule } from './adventure/adventure.module';
+import { HealthController } from './health.controller';
 import databaseConfig from './config/database.config';
 
 /**
@@ -60,7 +61,7 @@ import databaseConfig from './config/database.config';
     
     // Feature modules will be added here
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}

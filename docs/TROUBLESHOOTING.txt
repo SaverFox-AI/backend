@@ -1,0 +1,227 @@
+=== SAVERFOX RENDER TROUBLESHOOTING GUIDE ===
+
+ISSUE 1: Service Returns 503 or Times Out
+------------------------------------------
+Symptoms:
+- First request takes 30-60 seconds
+- Service shows "Service Unavailable"
+
+Cause: Free tier services sleep after 15 minutes of inactivity
+
+Solution:
+✓ Wait 30-60 seconds for cold start
+✓ Refresh the page
+✓ This is normal behavior on free tier
+✓ Consider upgrading to paid tier for always-on
+
+ISSUE 2: Database Connection Failed
+------------------------------------
+Symptoms:
+- API service crashes on startup
+- Error: "Connection refused" or "ECONNREFUSED"
+
+Cause: Wrong database URL or credentials
+
+Solution:
+✓ Use INTERNAL database URL (not external)
+✓ Format: postgres://user:pass@internal-host:5432/db
+✓ Check DB_HOST, DB_PASSWORD, DB_DATABASE env vars
+✓ Verify database is running in Render dashboard
+
+ISSUE 3: Migration Failed
+--------------------------
+Symptoms:
+- API service starts but no tables in database
+- Error: "relation does not exist"
+
+Cause: Migrations didn't run automatically
+
+Solution:
+✓ Go to API service → Shell tab
+✓ Run: npm run migration:run
+✓ Check output for errors
+✓ Verify database connection first
+
+ISSUE 4: AI Service Timeout
+----------------------------
+Symptoms:
+- API returns "AI service unavailable"
+- Timeout after 30 seconds
+
+Cause: AI service not responding or wrong URL
+
+Solution:
+✓ Check AI service is running (green status)
+✓ Verify AI_SERVICE_URL in API service env vars
+✓ Test AI service directly: curl <AI_URL>/health
+✓ Check OPENAI_API_KEY is valid
+✓ Increase AI_SERVICE_TIMEOUT if needed
+
+ISSUE 5: Build Failed - Python Service
+---------------------------------------
+Symptoms:
+- Build fails with "No module named..."
+- Dependency installation errors
+
+Cause: Missing or incompatible dependencies
+
+Solution:
+✓ Check requirements.txt exists
+✓ Verify Python version (should be 3.11)
+✓ Check build logs for specific error
+✓ Try: pip install --upgrade pip in build command
+
+ISSUE 6: Build Failed - TypeScript Service
+-------------------------------------------
+Symptoms:
+- Build fails with "Cannot find module..."
+- npm install errors
+
+Cause: Missing dependencies or version mismatch
+
+Solution:
+✓ Check package.json exists
+✓ Verify Node version (should be 20.x)
+✓ Check build logs for specific error
+✓ Try: npm ci instead of npm install
+
+ISSUE 7: CORS Errors in Browser
+--------------------------------
+Symptoms:
+- Browser console shows CORS error
+- "Access-Control-Allow-Origin" error
+
+Cause: CORS not configured properly
+
+Solution:
+✓ Set CORS_ORIGIN=* in API service env vars
+✓ Set CORS_ORIGINS=["*"] in AI service env vars
+✓ Restart services after changing env vars
+✓ Clear browser cache
+
+ISSUE 8: JWT Authentication Failed
+-----------------------------------
+Symptoms:
+- Login returns 401 Unauthorized
+- Token validation fails
+
+Cause: JWT_SECRET not set or mismatch
+
+Solution:
+✓ Set JWT_SECRET in API service env vars
+✓ Use same secret across all instances
+✓ Generate strong secret (32+ characters)
+✓ Restart service after setting
+
+ISSUE 9: Opik Traces Not Showing
+---------------------------------
+Symptoms:
+- No traces in Opik dashboard
+- opik_trace_id is "tracked_by_decorator"
+
+Cause: OPIK_API_KEY not set or invalid
+
+Solution:
+✓ Set OPIK_API_KEY in AI service env vars
+✓ Verify key is valid at comet.com/opik
+✓ Check AI service logs for Opik errors
+✓ Restart AI service after setting key
+
+ISSUE 10: Environment Variables Not Working
+--------------------------------------------
+Symptoms:
+- Service uses default values
+- Configuration not applied
+
+Cause: Env vars not saved or service not restarted
+
+Solution:
+✓ Click "Save Changes" after adding env vars
+✓ Wait for automatic redeploy
+✓ Or manually trigger redeploy
+✓ Check logs to verify values are loaded
+
+=== CHECKING SERVICE HEALTH ===
+
+AI Service Health:
+curl https://saverfox-ai-python.onrender.com/health
+
+Expected Response:
+{"status":"healthy"}
+
+API Service Health:
+curl https://saverfox-api-ts.onrender.com/api/health
+
+Expected Response:
+{"status":"ok","timestamp":"...","service":"saverfox-api-ts"}
+
+=== VIEWING LOGS ===
+
+1. Go to Render dashboard
+2. Click on service name
+3. Click "Logs" tab
+4. Look for errors (red text)
+5. Check startup messages
+
+Common Log Messages:
+
+✓ Good:
+- "SaverFox AI Service is running"
+- "Database connected successfully"
+- "Opik configured"
+- "Server listening on port"
+
+✗ Bad:
+- "Connection refused"
+- "ECONNREFUSED"
+- "Module not found"
+- "Authentication failed"
+
+=== MANUAL TESTING ===
+
+Test Registration:
+curl -X POST https://saverfox-api-ts.onrender.com/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123!","username":"testuser"}'
+
+Test Login:
+curl -X POST https://saverfox-api-ts.onrender.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123!"}'
+
+Test AI Generation (requires auth token):
+curl -X POST https://saverfox-api-ts.onrender.com/api/adventure/generate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{"context":"Test adventure"}'
+
+=== GETTING HELP ===
+
+1. Check service logs first
+2. Verify all environment variables
+3. Test each service independently
+4. Check Render status page: status.render.com
+5. Review deployment guides in this repo
+
+=== USEFUL COMMANDS ===
+
+View logs:
+- Render Dashboard → Service → Logs
+
+Run shell commands:
+- Render Dashboard → Service → Shell
+
+Restart service:
+- Render Dashboard → Service → Manual Deploy → Deploy latest commit
+
+View environment variables:
+- Render Dashboard → Service → Environment
+
+=== CONTACT & RESOURCES ===
+
+Render Docs: https://render.com/docs
+Render Community: https://community.render.com
+Render Status: https://status.render.com
+
+OpenAI Status: https://status.openai.com
+Opik Docs: https://www.comet.com/docs/opik

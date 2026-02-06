@@ -1,0 +1,153 @@
+=== SAVERFOX RENDER DEPLOYMENT GUIDE ===
+
+Kamu butuh 3 services di Render:
+
+1. PostgreSQL Database
+2. AI Python Service (FastAPI)
+3. API TypeScript Service (NestJS)
+
+=== STEP 1: CREATE POSTGRESQL DATABASE ===
+
+1. Login ke Render.com
+2. Click "New +" → "PostgreSQL"
+3. Settings:
+   - Name: saverfox-db
+   - Database: saverfox_db
+   - User: saverfox
+   - Region: Singapore
+   - Plan: Free
+4. Click "Create Database"
+5. SAVE connection details (akan muncul setelah database dibuat)
+
+=== STEP 2: DEPLOY AI PYTHON SERVICE ===
+
+1. Click "New +" → "Web Service"
+2. Connect your GitHub repo
+3. Settings:
+   - Name: saverfox-ai-python
+   - Region: Singapore
+   - Branch: main (atau branch kamu)
+   - Root Directory: backend/apps/ai-python
+   - Runtime: Python 3
+   - Build Command: pip install -r requirements.txt
+   - Start Command: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+   - Plan: Free
+
+4. Environment Variables (Add these):
+   LLM_PROVIDER=openai
+   OPENAI_API_KEY=<your-openai-key>
+   OPENAI_MODEL=gpt-4
+   OPIK_API_KEY=<your-opik-key>
+   OPIK_WORKSPACE=default
+   OPIK_PROJECT_NAME=saverfox-ai
+   DEBUG=false
+   API_PREFIX=/api
+   CORS_ORIGINS=["*"]
+
+5. Click "Create Web Service"
+6. SAVE the service URL (e.g., https://saverfox-ai-python.onrender.com)
+
+=== STEP 3: DEPLOY API TYPESCRIPT SERVICE ===
+
+1. Click "New +" → "Web Service"
+2. Connect your GitHub repo
+3. Settings:
+   - Name: saverfox-api-ts
+   - Region: Singapore
+   - Branch: main
+   - Root Directory: backend/apps/api-ts
+   - Runtime: Node
+   - Build Command: npm install && npm run build
+   - Start Command: npm run start:prod
+   - Plan: Free
+
+4. Environment Variables (Add these):
+
+   # Database (dari Step 1)
+   DB_HOST=<from-database-internal-url>
+   DB_PORT=5432
+   DB_USERNAME=saverfox
+   DB_PASSWORD=<from-database>
+   DB_DATABASE=saverfox_db
+   
+   # App Config
+   NODE_ENV=production
+   API_PREFIX=api
+   JWT_SECRET=<generate-random-string-min-32-chars>
+   JWT_EXPIRATION=24h
+   
+   # AI Service (dari Step 2)
+   AI_SERVICE_URL=https://saverfox-ai-python.onrender.com
+   AI_SERVICE_TIMEOUT=30000
+   AI_SERVICE_MAX_RETRIES=3
+   
+   # CORS
+   CORS_ORIGIN=*
+   LOG_LEVEL=info
+
+5. Click "Create Web Service"
+
+=== STEP 4: RUN DATABASE MIGRATIONS ===
+
+Setelah API service deploy:
+
+1. Go to saverfox-api-ts service
+2. Click "Shell" tab
+3. Run: npm run migration:run
+4. Verify migrations ran successfully
+
+=== STEP 5: TEST DEPLOYMENT ===
+
+Test AI Service:
+curl https://saverfox-ai-python.onrender.com/health
+
+Test API Service:
+curl https://saverfox-api-ts.onrender.com/api/health
+
+Test Swagger Docs:
+https://saverfox-api-ts.onrender.com/api/docs
+
+=== IMPORTANT NOTES ===
+
+1. Free tier services sleep after 15 minutes of inactivity
+   - First request after sleep takes ~30-60 seconds
+   
+2. Database connection string format:
+   postgres://user:password@host:port/database
+   
+3. Jika migration gagal, bisa run manual via Shell:
+   cd /opt/render/project/src
+   npm run migration:run
+
+4. Monitor logs di Render dashboard untuk troubleshooting
+
+5. Environment variables bisa diupdate kapan saja di Settings tab
+
+=== URLS AFTER DEPLOYMENT ===
+
+Database: (internal only)
+AI Service: https://saverfox-ai-python.onrender.com
+API Service: https://saverfox-api-ts.onrender.com
+API Docs: https://saverfox-api-ts.onrender.com/api/docs
+
+=== TROUBLESHOOTING ===
+
+Build Failed:
+- Check logs di Render dashboard
+- Verify all dependencies di package.json/requirements.txt
+- Check Node/Python version compatibility
+
+Service Won't Start:
+- Check environment variables
+- Verify database connection
+- Check logs for errors
+
+Database Connection Failed:
+- Use INTERNAL database URL (not external)
+- Verify credentials
+- Check if database is running
+
+AI Service Timeout:
+- Increase AI_SERVICE_TIMEOUT
+- Check AI service logs
+- Verify OPENAI_API_KEY is valid

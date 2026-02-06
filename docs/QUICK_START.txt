@@ -1,0 +1,106 @@
+╔═══════════════════════════════════════════════════════════════╗
+║         SAVERFOX RENDER DEPLOYMENT - QUICK START              ║
+╚═══════════════════════════════════════════════════════════════╝
+
+STEP 1: PREPARE
+---------------
+□ Get OpenAI API key: https://platform.openai.com/api-keys
+□ Get Opik API key: https://www.comet.com/opik
+□ Generate JWT secret (32+ chars)
+
+STEP 2: PUSH TO GITHUB
+----------------------
+git add .
+git commit -m "Add Render deployment config"
+git push origin main
+
+STEP 3: CREATE SERVICES ON RENDER
+----------------------------------
+
+A) PostgreSQL Database
+   - New + → PostgreSQL
+   - Name: saverfox-db
+   - Region: Singapore
+   - Plan: Free
+   - SAVE: Internal connection URL
+
+B) AI Python Service
+   - New + → Web Service
+   - Connect GitHub repo
+   - Name: saverfox-ai-python
+   - Root: backend/apps/ai-python
+   - Runtime: Python 3
+   - Build: pip install -r requirements.txt
+   - Start: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+   - Plan: Free
+   
+   Environment Variables:
+   LLM_PROVIDER=openai
+   OPENAI_API_KEY=<your-key>
+   OPIK_API_KEY=<your-key>
+   CORS_ORIGINS=["*"]
+   
+   - SAVE: Service URL
+
+C) API TypeScript Service
+   - New + → Web Service
+   - Connect GitHub repo
+   - Name: saverfox-api-ts
+   - Root: backend/apps/api-ts
+   - Runtime: Node
+   - Build: npm install && npm run build
+   - Start: sh start.sh
+   - Plan: Free
+   
+   Environment Variables:
+   DB_HOST=<from-database>
+   DB_PORT=5432
+   DB_USERNAME=saverfox
+   DB_PASSWORD=<from-database>
+   DB_DATABASE=saverfox_db
+   JWT_SECRET=<generate-random-32-chars>
+   AI_SERVICE_URL=<from-ai-service>
+   NODE_ENV=production
+   CORS_ORIGIN=*
+
+STEP 4: TEST
+------------
+Wait for deployments to complete (5-10 minutes)
+
+Test AI Service:
+curl https://saverfox-ai-python.onrender.com/health
+
+Test API Service:
+curl https://saverfox-api-ts.onrender.com/api/health
+
+View API Docs:
+https://saverfox-api-ts.onrender.com/api/docs
+
+DONE! 🎉
+
+═══════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING:
+
+❌ Service not responding?
+   → Wait 30-60s (cold start on free tier)
+   → Check logs in Render dashboard
+
+❌ Database connection failed?
+   → Use INTERNAL database URL (not external)
+   → Verify credentials
+
+❌ Build failed?
+   → Check logs for specific error
+   → Verify dependencies in package.json/requirements.txt
+
+❌ Migration failed?
+   → Go to Shell tab in API service
+   → Run: npm run migration:run
+
+═══════════════════════════════════════════════════════════════
+
+DETAILED GUIDES:
+- RENDER_DEPLOY.txt - Full step-by-step guide
+- ENV_VARIABLES_RENDER.txt - All environment variables
+- DEPLOYMENT_SUMMARY.txt - Complete overview
