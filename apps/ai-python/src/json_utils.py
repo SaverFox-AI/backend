@@ -28,7 +28,7 @@ def extract_json(text: str) -> Optional[Dict[str, Any]]:
     except json.JSONDecodeError:
         pass
     
-    # Try to find JSON object boundaries
+    # Try to find JSON object boundaries with better handling
     try:
         # Find first { and last }
         start = text.find('{')
@@ -36,9 +36,26 @@ def extract_json(text: str) -> Optional[Dict[str, Any]]:
         
         if start != -1 and end != -1 and end > start:
             json_str = text[start:end + 1]
-            return json.loads(json_str)
-    except json.JSONDecodeError:
-        pass
+            
+            # Try to parse
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                # If failed, try to find complete JSON by counting braces
+                brace_count = 0
+                for i in range(start, len(text)):
+                    if text[i] == '{':
+                        brace_count += 1
+                    elif text[i] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_str = text[start:i + 1]
+                            try:
+                                return json.loads(json_str)
+                            except json.JSONDecodeError:
+                                continue
+    except Exception as e:
+        logger.debug(f"Error during JSON extraction: {e}")
     
     # Try to find JSON array boundaries
     try:

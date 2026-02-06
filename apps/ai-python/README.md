@@ -4,194 +4,122 @@ Python FastAPI service for generating Indonesian money adventure scenarios and e
 
 ## Features
 
-- **🇮🇩 Indonesian Language**: Child-friendly Indonesian language for all scenarios and feedback
-- **🤖 Multi-LLM Support**: Supports both OpenAI and Google Gemini providers
-- **📚 Adventure Generation**: Creates contextual financial scenarios (max 60 words)
-- **⚖️ LLM-as-Judge Evaluation**: Evaluates decisions with educational feedback
-- **📊 Opik Integration**: Full observability with trace IDs and metrics logging
-- **✅ Validation**: Comprehensive request validation using Pydantic models
-- **🛡️ Safety**: No PII requests, no adult topics, gentle guidance
+- 🇮🇩 Indonesian Language: Child-friendly Indonesian for all scenarios
+- 🤖 Multi-LLM Support: OpenAI, Google Gemini, or Kimi (Moonshot)
+- 📚 Adventure Generation: Contextual financial scenarios (max 60 words)
+- ⚖️ LLM-as-Judge Evaluation: Educational feedback with scores
+- 📊 Opik Integration: Full observability with traces
+- ✅ Robust JSON Parsing: Handles imperfect LLM outputs
+- 🔄 Auto-retry: Regenerates if constraints violated
 
-## Story Requirements
+## Quick Start
 
-All generated stories follow these strict requirements:
-- ✅ Child-friendly Indonesian language
-- ✅ Maximum 60 words per story
-- ✅ Gentle guidance without lecturing
-- ❌ No PII requests (name, address, school)
-- ❌ No adult topics (loans, credit cards, complex investments)
-- ✅ Focus on everyday situations (snacks, saving, sharing)
-
-## Evaluation Metrics
-
-The service evaluates choices using three dimensions (0.0-1.0):
-
-1. **age_appropriateness**: How suitable is the decision for the child's age?
-2. **goal_alignment**: How well does it align with their savings goals?
-3. **financial_reasoning**: Quality of financial reasoning shown
-
-## Project Structure
-
-```
-src/
-├── __init__.py
-├── main.py                 # FastAPI application entry point
-├── config.py               # Configuration management
-├── models.py               # Pydantic request/response models
-├── llm_provider.py         # LLM provider abstraction (OpenAI/Gemini)
-├── scenario_generator.py   # Indonesian scenario generation
-├── choice_evaluator.py     # Indonesian choice evaluation
-├── opik_tracer.py         # Opik tracing utilities
-├── middleware.py          # Request validation middleware
-├── exception_handlers.py  # Global exception handlers
-└── routers/
-    ├── __init__.py
-    └── adventure.py       # Adventure endpoints
-
-tests/
-├── __init__.py
-├── conftest.py           # Pytest fixtures
-├── test_models.py        # Model validation tests
-└── test_api.py           # API endpoint tests
-```
-
-## Setup
-
-### Prerequisites
-
-- Python 3.11+
-- Poetry (for dependency management)
-- OpenAI API key OR Google Gemini API key
-- Opik API key (from Comet)
-
-### Installation
-
-1. Install dependencies:
+### 1. Install Dependencies
 ```bash
 poetry install
 ```
 
-2. Copy environment variables:
+### 2. Configure Environment
 ```bash
 cp .env.example .env
 ```
 
-3. Update `.env` with your configuration:
+Edit `.env` and choose LLM provider:
+
+**Option A: Gemini (Recommended - Free tier available)**
 ```env
-# Choose your LLM provider
-LLM_PROVIDER=openai  # or "gemini"
-
-# If using OpenAI
-OPENAI_API_KEY=your-openai-api-key-here
-OPENAI_MODEL=gpt-4-turbo-preview
-
-# If using Gemini
-GEMINI_API_KEY=your-gemini-api-key-here
-GEMINI_MODEL=gemini-pro
-
-# Opik configuration
-OPIK_API_KEY=your-opik-api-key-here
-OPIK_PROJECT_NAME=money-adventures
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your-key-here
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MAX_TOKENS=2000
 ```
 
-## Running the Service
+**Option B: OpenAI**
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-your-key-here
+OPENAI_MODEL=gpt-4
+```
 
-### Development Mode
+**Option C: Kimi (Moonshot)**
+```env
+LLM_PROVIDER=kimi
+KIMI_API_KEY=sk-your-key-here
+KIMI_MODEL=moonshot-v1-8k
+```
 
+**Opik (Optional but recommended)**
+```env
+OPIK_API_KEY=your-key-here
+OPIK_WORKSPACE=your-workspace
+OPIK_PROJECT_NAME=saverfox-ai
+```
+
+### 3. Run Service
 ```bash
 poetry run python -m src.main
 ```
 
-Or with auto-reload:
+Service runs at: http://localhost:8000
 
+### 4. Test API
+
+**Swagger UI:** http://localhost:8000/api/docs
+
+**Generate Scenario:**
 ```bash
-poetry run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+curl -X POST http://localhost:8000/api/adventure/generate \
+  -H "Content-Type: application/json" \
+  -d '{"user_age": 10, "allowance": 70000, "goal_context": "Menabung untuk sepeda baru"}'
 ```
 
-### Production Mode
-
+**Evaluate Choice:**
 ```bash
-poetry run uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4
+curl -X POST http://localhost:8000/api/adventure/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"scenario": "Kamu dapat uang Rp 10.000", "choice_index": 0, "choice_text": "Menabung semua", "user_age": 10}'
 ```
-
-The service will be available at `http://localhost:8000`
-
-**API Documentation:**
-- Swagger UI: http://localhost:8000/api/docs
-- ReDoc: http://localhost:8000/api/redoc
-
-## API Documentation
-
-Once running, access the interactive API documentation:
-- **Swagger UI**: http://localhost:8000/api/docs
-- **ReDoc**: http://localhost:8000/api/redoc
-- **OpenAPI JSON**: http://localhost:8000/api/openapi.json
-- **OpenAPI YAML**: See `openapi.yaml` file
 
 ## API Endpoints
 
-### Health Check
+### POST /api/adventure/generate
+Generate Indonesian money adventure scenario.
 
-```bash
-GET /
-GET /health
-```
-
-Returns service status and version information.
-
-### Generate Adventure (Indonesian)
-
-```bash
-POST /api/adventure/generate
-```
-
-**Request Body:**
+**Request:**
 ```json
 {
   "user_age": 10,
-  "allowance": 70000.0,
+  "allowance": 70000,
   "goal_context": "Menabung untuk sepeda baru",
-  "recent_activities": ["Mencatat pengeluaran: jajan Rp 5.000"]
+  "recent_activities": ["Jajan Rp 5.000"]
 }
 ```
 
 **Response:**
 ```json
 {
-  "scenario": "Kamu menemukan uang Rp 10.000 di jalan! Apa yang akan kamu lakukan?",
+  "scenario": "Hari ini kamu dapat uang saku Rp 10.000...",
   "choices": [
-    "Menabung untuk tujuan sepeda",
-    "Membeli jajan favorit",
-    "Memberikan setengahnya untuk amal"
+    "Menabung semua untuk sepeda",
+    "Jajan es krim",
+    "Jajan sedikit, sisanya ditabung"
   ],
-  "opik_trace_id": "trace_abc123xyz"
+  "opik_trace_id": "trace_123"
 }
 ```
 
-**Opik Trace Metadata:**
-- `user_age`: Child's age
-- `allowance_daily`: Daily allowance in Rupiah
-- `goal_context`: Savings goal
-- `language`: "indonesian"
-- `max_story_words`: 60
+### POST /api/adventure/evaluate
+Evaluate player's choice with feedback.
 
-### Evaluate Choice (Indonesian)
-
-```bash
-POST /api/adventure/evaluate
-```
-
-**Request Body:**
+**Request:**
 ```json
 {
-  "scenario": "Kamu menemukan uang Rp 10.000 di jalan!",
+  "scenario": "Kamu dapat uang Rp 10.000",
   "choice_index": 0,
-  "choice_text": "Menabung untuk tujuan sepeda",
+  "choice_text": "Menabung semua untuk sepeda",
   "user_age": 10,
   "amounts": {
-    "found_money": 10000.0,
-    "expense": 0.0,
-    "saving": 10000.0,
+    "saving": 10000,
     "goal_name": "Sepeda baru"
   }
 }
@@ -200,247 +128,87 @@ POST /api/adventure/evaluate
 **Response:**
 ```json
 {
-  "feedback": "Pilihan yang bagus! Menabung untuk tujuanmu menunjukkan perencanaan yang baik. Kamu berpikir tentang masa depan!",
+  "feedback": "Pilihan yang bagus! Menabung menunjukkan perencanaan yang baik.",
   "scores": {
     "age_appropriateness": 0.9,
     "goal_alignment": 0.95,
     "financial_reasoning": 0.85
   },
-  "opik_trace_id": "trace_def456uvw"
+  "opik_trace_id": "trace_456"
 }
 ```
 
-**Opik Trace Metadata:**
-- `user_age`: Child's age
-- `choice`: Selected choice text
-- `choice_index`: Choice index
-- `expense_amount`: Expense amount (if any)
-- `saving_amount`: Saving amount (if any)
-- `goal_name`: Goal name (if any)
-- `language`: "indonesian"
-- `evaluation_method`: "llm_as_judge"
+## Run Experiments
 
-**Opik Feedback Scores Logged:**
-- `age_appropriateness`
-- `goal_alignment`
-- `financial_reasoning`
-
-## LLM Provider Configuration
-
-### Using OpenAI
-
-```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4-turbo-preview
-OPENAI_TEMPERATURE=0.7
-OPENAI_MAX_TOKENS=1000
-```
-
-### Using Google Gemini
-
-```env
-LLM_PROVIDER=gemini
-GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-pro
-GEMINI_TEMPERATURE=0.7
-GEMINI_MAX_TOKENS=1000
-```
-
-The service automatically uses the configured provider. No code changes needed!
-
-## Testing
-
-### Run All Tests
+Evaluate prompts with 50 test cases:
 
 ```bash
-poetry run pytest
+poetry run python experiment_runner.py --experiment-name "baseline-v1"
 ```
 
-### Run with Coverage
+View results in Opik dashboard: https://www.comet.com/opik
 
-```bash
-poetry run pytest --cov=src --cov-report=html
+## LLM Provider Setup
+
+### Gemini (Free)
+1. https://makersuite.google.com/app/apikey
+2. Create API key
+3. Paste to `.env`
+
+### OpenAI (Paid)
+1. https://platform.openai.com/api-keys
+2. Create key & add billing
+3. Paste to `.env`
+
+### Kimi (Paid)
+1. https://platform.moonshot.cn/console/api-keys
+2. Create key & top up
+3. Paste to `.env`
+
+### Opik (Free)
+1. https://www.comet.com/signup
+2. Settings → API Keys
+3. Paste to `.env`
+
+## Troubleshooting
+
+**429 Rate Limit:**
+- Gemini free: 15 req/min, wait 1 minute
+- OpenAI: Top up billing
+- Kimi: Check quota
+
+**JSON Parse Failed:**
+- Increase `GEMINI_MAX_TOKENS=2000`
+- Use `gemini-1.5-flash` model
+- Or switch to Kimi (more reliable)
+
+**Opik Workspace Error:**
+- Check workspace name in dashboard
+- Update `OPIK_WORKSPACE` in `.env`
+
+## Project Structure
+
 ```
+src/
+├── main.py                 # FastAPI app
+├── config.py               # Settings
+├── models.py               # Pydantic models
+├── llm_provider.py         # LLM abstraction (OpenAI/Gemini/Kimi)
+├── scenario_generator.py   # Indonesian scenario generation
+├── choice_evaluator.py     # Choice evaluation
+├── json_utils.py           # Robust JSON extraction
+├── opik_tracer.py         # Opik integration
+└── routers/
+    └── adventure.py       # API endpoints
 
-### Run Specific Test File
+tests/
+├── conftest.py
+├── test_models.py
+└── test_api.py
 
-```bash
-poetry run pytest tests/test_models.py
+eval_dataset.jsonl         # 50 test cases
+experiment_runner.py       # Experiment orchestration
 ```
-
-### Run with Verbose Output
-
-```bash
-poetry run pytest -v
-```
-
-## Configuration
-
-All configuration is managed through environment variables. See `.env.example` for available options:
-
-### Application Settings
-- `APP_NAME`: Application name
-- `APP_VERSION`: Version number
-- `DEBUG`: Debug mode (true/false)
-- `HOST`: Server host (default: 0.0.0.0)
-- `PORT`: Server port (default: 8000)
-
-### LLM Provider Settings
-- `LLM_PROVIDER`: "openai" or "gemini"
-
-### OpenAI Settings (if using OpenAI)
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `OPENAI_MODEL`: Model name (e.g., gpt-4-turbo-preview)
-- `OPENAI_TEMPERATURE`: Sampling temperature (0-1)
-- `OPENAI_MAX_TOKENS`: Maximum tokens to generate
-
-### Gemini Settings (if using Gemini)
-- `GEMINI_API_KEY`: Your Google Gemini API key
-- `GEMINI_MODEL`: Model name (e.g., gemini-pro)
-- `GEMINI_TEMPERATURE`: Sampling temperature (0-1)
-- `GEMINI_MAX_TOKENS`: Maximum tokens to generate
-
-### Opik Settings
-- `OPIK_API_KEY`: Your Opik API key from Comet
-- `OPIK_PROJECT_NAME`: Project name for traces
-- `OPIK_WORKSPACE`: Workspace name
-
-### CORS Settings
-- `CORS_ORIGINS`: Allowed origins (JSON array)
-- `CORS_ALLOW_CREDENTIALS`: Allow credentials (true/false)
-
-## Error Handling
-
-The service uses consistent error responses across all endpoints:
-
-```json
-{
-  "status_code": 400,
-  "message": "Validation error",
-  "error": "Bad Request",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "path": "/v1/adventure/generate",
-  "validation_errors": [
-    {
-      "field": "user_age",
-      "message": "Must be between 5 and 18"
-    }
-  ]
-}
-```
-
-### HTTP Status Codes
-
-- **200**: Success
-- **400**: Bad Request (validation errors)
-- **404**: Not Found
-- **405**: Method Not Allowed
-- **422**: Unprocessable Entity (business logic errors)
-- **500**: Internal Server Error
-
-## Observability with Opik
-
-All AI operations are traced using Opik (Comet platform):
-
-### Generation Traces
-- **Trace Name**: `saverfox.money_adventure.generate`
-- **Metadata**: user_age, allowance_daily, goal_context, language, max_story_words
-- **Tags**: generation, indonesian, age_{user_age}
-- **Output**: scenario, choices, word_count
-
-### Evaluation Traces
-- **Trace Name**: `saverfox.money_adventure.evaluate`
-- **Metadata**: user_age, choice, expense_amount, saving_amount, goal_name, language, evaluation_method
-- **Tags**: evaluation, indonesian, age_{user_age}
-- **Output**: feedback, scores
-- **Feedback Scores**: age_appropriateness, goal_alignment, financial_reasoning
-
-Access your traces at: https://www.comet.com/opik
-
-## Development
-
-### Code Style
-
-The project uses:
-- **Black** for code formatting (line length: 100)
-- **Ruff** for linting
-- **MyPy** for type checking
-
-Run formatters:
-```bash
-poetry run black src tests
-poetry run ruff check src tests
-poetry run mypy src
-```
-
-### Adding New Endpoints
-
-1. Create a new router in `src/routers/`
-2. Add the router to `src/main.py`
-3. Add tests in `tests/`
-4. Update OpenAPI spec in `openapi.yaml`
-5. Update this README
-
-## Architecture
-
-The service follows a clean architecture pattern:
-
-- **Routers**: Handle HTTP requests and responses
-- **LLM Provider**: Abstract LLM interface (OpenAI/Gemini)
-- **Services**: Business logic (ScenarioGenerator, ChoiceEvaluator)
-- **Models**: Request/response validation (Pydantic)
-- **Middleware**: Cross-cutting concerns (logging, validation)
-- **Exception Handlers**: Consistent error responses
-- **Opik Tracer**: Observability and tracing
-
-## Integration with API Service
-
-The AI service is called by the TypeScript API service:
-
-1. API service receives client request
-2. API service calls AI service with user context
-3. AI service generates Indonesian scenario/evaluation
-4. AI service returns result with Opik trace ID
-5. API service stores result with trace ID in database
-6. API service returns result to client
-
-## Docker Support
-
-Build and run with Docker:
-
-```bash
-# Build image
-docker build -t saverfox-ai .
-
-# Run container
-docker run -p 8000:8000 --env-file .env saverfox-ai
-```
-
-Or use docker-compose from the root backend directory:
-
-```bash
-cd ..
-docker-compose up ai-service
-```
-
-## Prompt Engineering
-
-### Generation Prompts
-The service uses carefully crafted Indonesian prompts that:
-- Emphasize child-friendly language
-- Enforce 60-word limit
-- Prevent PII requests
-- Avoid adult topics
-- Focus on everyday situations
-
-### Evaluation Prompts
-The evaluation prompts:
-- Provide encouraging feedback
-- Use gentle guidance
-- Avoid judgmental language
-- Consider age appropriateness
-- Align with savings goals
 
 ## License
 

@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Request
-from opik.api_objects import trace
+from opik import track
 
 from src.config import settings
 from src.models import (
@@ -27,6 +27,11 @@ choice_evaluator = ChoiceEvaluator()
 
 
 @router.post("/generate", response_model=GenerateAdventureResponse)
+@track(
+    name="saverfox.money_adventure.generate",
+    project_name=settings.opik_project_name,
+    tags=["generation", "indonesian"],
+)
 async def generate_adventure(
     request: GenerateAdventureRequest,
     http_request: Request,
@@ -73,76 +78,30 @@ async def generate_adventure(
             f"daily allowance Rp {daily_allowance:,.0f}"
         )
         
-        # Create Opik trace with metadata (only if enabled)
-        if is_opik_enabled():
-            with trace.Trace(
-                name="saverfox.money_adventure.generate",
-                project_name=settings.opik_project_name,
-                metadata={
-                    "user_age": request.user_age,
-                    "allowance_daily": daily_allowance,
-                    "goal_context": request.goal_context or "",
-                    "recent_activities": request.recent_activities or [],
-                    "language": "indonesian",
-                    "max_story_words": 60,
-                },
-                tags=["generation", "indonesian", f"age_{request.user_age}"],
-            ) as opik_trace:
-                # Generate scenario using LLM
-                scenario, choices = await scenario_generator.generate(request)
-                
-                # Calculate word count and check constraint
-                word_count = len(scenario.split())
-                constraint_violation = word_count > 60
-                
-                # Log LLM input/output to trace
-                opik_trace.log_output({
-                    "scenario": scenario,
-                    "choices": choices,
-                    "word_count": word_count,
-                    "constraint_violation": constraint_violation,
-                })
-                
-                # Add tag if constraint violated
-                if constraint_violation:
-                    opik_trace.update(tags=opik_trace.tags + ["too_long"])
-                
-                # Get trace ID - must be valid or raise error
-                trace_id = opik_trace.id
-                if not trace_id:
-                    logger.error("Opik trace ID is None - Opik integration issue")
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Opik tracing failed - trace ID not generated",
-                    )
-                
-                logger.info(
-                    f"Successfully generated adventure with trace_id: {trace_id}",
-                    extra={
-                        "user_age": request.user_age,
-                        "allowance_daily": daily_allowance,
-                        "goal_context": request.goal_context,
-                        "num_choices": len(choices),
-                        "word_count": word_count,
-                        "constraint_violation": constraint_violation,
-                    },
-                )
-                
-                return GenerateAdventureResponse(
-                    scenario=scenario,
-                    choices=choices,
-                    opik_trace_id=trace_id,
-                )
-        else:
-            # Opik disabled - generate without tracing
-            logger.warning("Opik disabled - generating without trace")
-            scenario, choices = await scenario_generator.generate(request)
-            
-            return GenerateAdventureResponse(
-                scenario=scenario,
-                choices=choices,
-                opik_trace_id="opik_disabled",
-            )
+        # Generate scenario using LLM
+        scenario, choices = await scenario_generator.generate(request)
+        
+        # Calculate word count and check constraint
+        word_count = len(scenario.split())
+        constraint_violation = word_count > 60
+        
+        logger.info(
+            f"Successfully generated adventure",
+            extra={
+                "user_age": request.user_age,
+                "allowance_daily": daily_allowance,
+                "goal_context": request.goal_context,
+                "num_choices": len(choices),
+                "word_count": word_count,
+                "constraint_violation": constraint_violation,
+            },
+        )
+        
+        return GenerateAdventureResponse(
+            scenario=scenario,
+            choices=choices,
+            opik_trace_id="tracked_by_decorator",
+        )
     
     except ValueError as e:
         logger.error(f"Validation error during generation: {e}")
@@ -160,6 +119,11 @@ async def generate_adventure(
 
 
 @router.post("/evaluate", response_model=EvaluateChoiceResponse)
+@track(
+    name="saverfox.money_adventure.evaluate",
+    project_name=settings.opik_project_name,
+    tags=["evaluation", "indonesian"],
+)
 async def evaluate_choice(
     request: EvaluateChoiceRequest,
     http_request: Request,
@@ -205,91 +169,26 @@ async def evaluate_choice(
             f"choice_index={request.choice_index}"
         )
         
-        # Extract amounts for metadata
-        expense_amount = request.amounts.get("expense", 0.0) if request.amounts else 0.0
-        saving_amount = request.amounts.get("saving", 0.0) if request.amounts else 0.0
-        goal_name = request.amounts.get("goal_name", "") if request.amounts else ""
+        # Evaluate choice using LLM
+        feedback, scores = await choice_evaluator.evaluate(request)
         
-        # Create Opik trace with metadata (only if enabled)
-        if is_opik_enabled():
-            with trace.Trace(
-                name="saverfox.money_adventure.evaluate",
-                project_name=settings.opik_project_name,
-                metadata={
-                    "user_age": request.user_age,
-                    "choice": request.choice_text,
-                    "choice_index": request.choice_index,
-                    "expense_amount": expense_amount,
-                    "saving_amount": saving_amount,
-                    "goal_name": goal_name,
-                    "language": "indonesian",
-                    "evaluation_method": "llm_as_judge",
-                },
-                tags=["evaluation", "indonesian", f"age_{request.user_age}"],
-            ) as opik_trace:
-                # Evaluate choice using LLM
-                feedback, scores = await choice_evaluator.evaluate(request)
-                
-                # Log LLM input/output and scores to trace
-                opik_trace.log_output({
-                    "feedback": feedback,
-                    "scores": {
-                        "age_appropriateness": scores.age_appropriateness,
-                        "goal_alignment": scores.goal_alignment,
-                        "financial_reasoning": scores.financial_reasoning,
-                    },
-                })
-                
-                # Log scores as feedback scores for Opik analytics
-                opik_trace.log_feedback_score(
-                    name="age_appropriateness",
-                    value=scores.age_appropriateness,
-                )
-                opik_trace.log_feedback_score(
-                    name="goal_alignment",
-                    value=scores.goal_alignment,
-                )
-                opik_trace.log_feedback_score(
-                    name="financial_reasoning",
-                    value=scores.financial_reasoning,
-                )
-                
-                # Get trace ID - must be valid or raise error
-                trace_id = opik_trace.id
-                if not trace_id:
-                    logger.error("Opik trace ID is None - Opik integration issue")
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Opik tracing failed - trace ID not generated",
-                    )
-                
-                logger.info(
-                    f"Successfully evaluated choice with trace_id: {trace_id}",
-                    extra={
-                        "user_age": request.user_age,
-                        "choice_index": request.choice_index,
-                        "choice_text": request.choice_text,
-                        "age_appropriateness": scores.age_appropriateness,
-                        "goal_alignment": scores.goal_alignment,
-                        "financial_reasoning": scores.financial_reasoning,
-                    },
-                )
-                
-                return EvaluateChoiceResponse(
-                    feedback=feedback,
-                    scores=scores,
-                    opik_trace_id=trace_id,
-                )
-        else:
-            # Opik disabled - evaluate without tracing
-            logger.warning("Opik disabled - evaluating without trace")
-            feedback, scores = await choice_evaluator.evaluate(request)
-            
-            return EvaluateChoiceResponse(
-                feedback=feedback,
-                scores=scores,
-                opik_trace_id="opik_disabled",
-            )
+        logger.info(
+            f"Successfully evaluated choice",
+            extra={
+                "user_age": request.user_age,
+                "choice_index": request.choice_index,
+                "choice_text": request.choice_text,
+                "age_appropriateness": scores.age_appropriateness,
+                "goal_alignment": scores.goal_alignment,
+                "financial_reasoning": scores.financial_reasoning,
+            },
+        )
+        
+        return EvaluateChoiceResponse(
+            feedback=feedback,
+            scores=scores,
+            opik_trace_id="tracked_by_decorator",
+        )
     
     except ValueError as e:
         logger.error(f"Validation error during evaluation: {e}")

@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     cors_allow_headers: list[str] = ["*"]
     
     # LLM Provider settings
-    llm_provider: str = "openai"  # "openai" or "gemini"
+    llm_provider: str = "openai"  # "openai", "gemini", or "kimi"
     
     # OpenAI settings
     openai_api_key: str = ""
@@ -44,8 +44,14 @@ class Settings(BaseSettings):
     gemini_temperature: float = 0.7
     gemini_max_tokens: int = 1000
     
+    # Kimi (Moonshot) settings
+    kimi_api_key: str = ""
+    kimi_model: str = "moonshot-v1-8k"
+    kimi_temperature: float = 0.7
+    kimi_max_tokens: int = 1000
+    
     # Opik settings
-    opik_api_key: str
+    opik_api_key: str = ""
     opik_project_name: str = "saverfox-ai"
     opik_workspace: str = "default"
 
