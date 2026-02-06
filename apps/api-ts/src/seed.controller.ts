@@ -82,7 +82,7 @@ export class SeedController {
 
   @Get('missions')
   async seedMissions() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
     const missions = [
       {
         title: 'Track Your Spending',
@@ -113,7 +113,7 @@ export class SeedController {
     const created = [];
     for (const mission of missions) {
       const existing = await this.missionRepository.findOne({
-        where: { title: mission.title, activeDate: mission.activeDate },
+        where: { title: mission.title },
       });
 
       if (!existing) {
