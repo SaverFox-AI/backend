@@ -10,6 +10,7 @@ import { Mission } from './entities/mission.entity';
  * 
  * Public endpoints for seeding initial data.
  * No authentication required.
+ * Updated: 2026-02-06
  */
 @Controller('seed')
 export class SeedController {
@@ -134,13 +135,11 @@ export class SeedController {
   async seedAll() {
     const chars = await this.seedCharacters();
     const foods = await this.seedFoods();
-    const missions = await this.seedMissions();
     
     return {
-      message: 'All data seeded',
+      message: 'Characters and foods seeded',
       characters: chars,
       foods: foods,
-      missions: missions,
     };
   }
 }
