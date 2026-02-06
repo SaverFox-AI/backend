@@ -75,7 +75,7 @@ export class AdventureController {
     @Request() req,
     @Body() generateDto: GenerateAdventureDto,
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const adventure = await this.adventureService.generateAdventure(
       userId,
       generateDto.context,
@@ -130,7 +130,7 @@ export class AdventureController {
   @ApiResponse({ status: 404, description: 'Adventure not found' })
   @ApiResponse({ status: 503, description: 'AI service unavailable' })
   async submitChoice(@Request() req, @Body() submitDto: SubmitChoiceDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const adventure = await this.adventureService.submitChoice(
       userId,
       submitDto.adventureId,
@@ -168,7 +168,7 @@ export class AdventureController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Adventure not found' })
   async getAdventure(@Request() req, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const adventure = await this.adventureService.getAdventure(userId, id);
 
     return {
@@ -204,7 +204,7 @@ export class AdventureController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAdventureHistory(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const adventures = await this.adventureService.getAdventureHistory(userId);
 
     return {

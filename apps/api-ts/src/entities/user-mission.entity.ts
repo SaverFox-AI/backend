@@ -37,9 +37,10 @@ export class UserMission {
   @IsNotEmpty()
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  // Removed @ManyToOne relation to avoid TypeORM conflict
+  // @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  // @JoinColumn({ name: 'user_id' })
+  // user: User;
 
   @Column({
     type: 'uuid',
@@ -50,9 +51,10 @@ export class UserMission {
   @IsNotEmpty()
   missionId: string;
 
-  @ManyToOne(() => Mission)
-  @JoinColumn({ name: 'mission_id' })
-  mission: Mission;
+  // Removed @ManyToOne relation to avoid TypeORM conflict
+  // @ManyToOne(() => Mission)
+  // @JoinColumn({ name: 'mission_id' })
+  // mission: Mission;
 
   @Column({
     type: 'jsonb',

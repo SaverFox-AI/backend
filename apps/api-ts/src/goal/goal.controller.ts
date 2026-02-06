@@ -40,7 +40,7 @@ export class GoalController {
    */
   @Post()
   async createGoal(@Request() req, @Body() createGoalDto: CreateGoalDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const goal = await this.goalService.createGoal(
       userId,
       createGoalDto.title,
@@ -72,7 +72,7 @@ export class GoalController {
    */
   @Get()
   async getGoals(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const goals = await this.goalService.getUserGoals(userId);
 
     return { goals };
@@ -88,7 +88,7 @@ export class GoalController {
    */
   @Get('active')
   async getActiveGoals(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const goals = await this.goalService.getActiveGoals(userId);
 
     return {
@@ -115,7 +115,7 @@ export class GoalController {
    */
   @Get('completed')
   async getCompletedGoals(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const goals = await this.goalService.getCompletedGoals(userId);
 
     return {
@@ -149,7 +149,7 @@ export class GoalController {
     @Param('id') id: string,
     @Body() addProgressDto: AddProgressDto,
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const result = await this.goalService.addProgress(
       id,
       userId,
@@ -176,7 +176,7 @@ export class GoalController {
    */
   @Delete(':id')
   async deleteGoal(@Request() req, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     await this.goalService.deleteGoal(id, userId);
 
     return {

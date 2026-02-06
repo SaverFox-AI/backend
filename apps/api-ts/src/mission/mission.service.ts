@@ -51,13 +51,13 @@ export class MissionService {
     userMission: UserMission;
     progressPercentage: number;
   }> {
-    // Get today's date (start of day)
+    // Get today's date in UTC (start of day)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
 
     // Find active mission for today
     const mission = await this.missionRepository.findOne({
-      where: { activeDate: today },
+      where: { activeDate: todayUTC },
     });
 
     if (!mission) {
@@ -65,21 +65,32 @@ export class MissionService {
     }
 
     // Get or create user mission
-    let userMission = await this.userMissionRepository.findOne({
-      where: {
-        userId,
-        missionId: mission.id,
-      },
-    });
+    let userMission = await this.userMissionRepository
+      .createQueryBuilder('um')
+      .where('um.userId = :userId', { userId })
+      .andWhere('um.missionId = :missionId', { missionId: mission.id })
+      .getOne();
 
     if (!userMission) {
-      userMission = this.userMissionRepository.create({
-        userId,
-        missionId: mission.id,
-        progress: {},
-        completed: false,
-      });
-      userMission = await this.userMissionRepository.save(userMission);
+      // Use query builder to insert with explicit values
+      await this.userMissionRepository
+        .createQueryBuilder()
+        .insert()
+        .into(UserMission)
+        .values({
+          userId: userId,
+          missionId: mission.id,
+          progress: {},
+          completed: false,
+        })
+        .execute();
+      
+      // Fetch the created record
+      userMission = await this.userMissionRepository
+        .createQueryBuilder('um')
+        .where('um.userId = :userId', { userId })
+        .andWhere('um.missionId = :missionId', { missionId: mission.id })
+        .getOne();
     }
 
     // Calculate progress percentage

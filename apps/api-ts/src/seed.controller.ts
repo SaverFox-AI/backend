@@ -83,7 +83,9 @@ export class SeedController {
 
   @Get('missions')
   async seedMissions() {
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    
     const missions = [
       {
         title: 'Track Your Spending',
@@ -112,12 +114,24 @@ export class SeedController {
     ];
     
     const created = [];
+    const updated = [];
+    
     for (const mission of missions) {
       const existing = await this.missionRepository.findOne({
         where: { title: mission.title },
       });
 
-      if (!existing) {
+      if (existing) {
+        // Update existing mission with today's date
+        existing.activeDate = mission.activeDate;
+        existing.description = mission.description;
+        existing.missionType = mission.missionType;
+        existing.requirements = mission.requirements;
+        existing.rewardCoins = mission.rewardCoins;
+        await this.missionRepository.save(existing);
+        updated.push(existing);
+      } else {
+        // Create new mission
         const item = this.missionRepository.create(mission);
         const saved = await this.missionRepository.save(item);
         created.push(saved);
@@ -127,7 +141,30 @@ export class SeedController {
     return { 
       message: 'Missions seeded', 
       created: created.length,
-      total: missions.length 
+      updated: updated.length,
+      total: missions.length,
+      todayDate: today.toISOString(),
+    };
+  }
+
+  @Get('missions/debug')
+  async debugMissions() {
+    const allMissions = await this.missionRepository.find({
+      order: { activeDate: 'DESC' },
+    });
+    
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    
+    return {
+      todayUTC: today.toISOString(),
+      totalMissions: allMissions.length,
+      missions: allMissions.map(m => ({
+        id: m.id,
+        title: m.title,
+        activeDate: m.activeDate,
+        activeDateISO: new Date(m.activeDate).toISOString(),
+      })),
     };
   }
 

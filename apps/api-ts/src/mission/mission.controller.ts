@@ -37,7 +37,7 @@ export class MissionController {
    */
   @Get('today')
   async getTodaysMission(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const result = await this.missionService.getTodaysMission(userId);
 
     return {
@@ -67,7 +67,7 @@ export class MissionController {
    */
   @Post('log-expense')
   async logExpense(@Request() req, @Body() logExpenseDto: LogExpenseDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const result = await this.missionService.logExpense(
       userId,
       logExpenseDto.amount,
@@ -102,7 +102,7 @@ export class MissionController {
    */
   @Post('log-saving')
   async logSaving(@Request() req, @Body() logSavingDto: LogSavingDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const result = await this.missionService.logSaving(
       userId,
       logSavingDto.amount,
@@ -132,7 +132,7 @@ export class MissionController {
    */
   @Get('expenses')
   async getExpenses(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const expenses = await this.missionService.getExpenseHistory(userId);
 
     return {
@@ -156,7 +156,7 @@ export class MissionController {
    */
   @Get('savings')
   async getSavings(@Request() req) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const savings = await this.missionService.getSavingHistory(userId);
 
     return {

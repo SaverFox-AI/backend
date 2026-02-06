@@ -24,10 +24,15 @@ class Settings(BaseSettings):
     port: int = 8001
     
     # CORS settings
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    cors_origins: str = "http://localhost:3000,http://localhost:8000"
     cors_allow_credentials: bool = True
     cors_allow_methods: list[str] = ["*"]
     cors_allow_headers: list[str] = ["*"]
+    
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS origins from comma-separated string."""
+        return [origin.strip() for origin in self.cors_origins.split(",")]
     
     # LLM Provider settings
     llm_provider: str = "openai"  # "openai", "gemini", or "kimi"
