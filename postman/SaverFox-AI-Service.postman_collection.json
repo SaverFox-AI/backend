@@ -101,7 +101,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"scenario\": \"Hari ini kamu dapat uang saku Rp 10.000. Kamu ingat impianmu punya sepeda baru. Tapi, di jalan pulang, teman mengajak jajan es krim kesukaan.\",\n  \"choice_index\": 0,\n  \"choice_text\": \"Menabung semua uang Rp 10.000 untuk sepedamu\",\n  \"user_age\": 10,\n  \"amounts\": {\n    \"saving\": 10000,\n    \"goal_name\": \"Sepeda baru\"\n  }\n}"
+					"raw": "{\n  \"scenario\": \"Hari ini kamu dapat uang saku Rp 10.000. Kamu ingat impianmu punya sepeda baru. Tapi, di jalan pulang, teman mengajak jajan es krim kesukaan.\",\n  \"choice_index\": 0,\n  \"choice_text\": \"Menabung semua uang Rp 10.000 untuk sepedamu\",\n  \"user_age\": 10,\n  \"amounts\": {\n    \"saving\": 10000\n  }\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/api/adventure/evaluate",
@@ -124,7 +124,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"scenario\": \"Hari ini kamu dapat uang saku Rp 10.000. Kamu ingat impianmu punya sepeda baru. Tapi, di jalan pulang, teman mengajak jajan es krim kesukaan.\",\n  \"choice_index\": 1,\n  \"choice_text\": \"Jajan es krim bersama teman\",\n  \"user_age\": 10,\n  \"amounts\": {\n    \"expense\": 10000,\n    \"goal_name\": \"Sepeda baru\"\n  }\n}"
+					"raw": "{\n  \"scenario\": \"Hari ini kamu dapat uang saku Rp 10.000. Kamu ingat impianmu punya sepeda baru. Tapi, di jalan pulang, teman mengajak jajan es krim kesukaan.\",\n  \"choice_index\": 1,\n  \"choice_text\": \"Jajan es krim bersama teman\",\n  \"user_age\": 10,\n  \"amounts\": {\n    \"expense\": 10000\n  }\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/api/adventure/evaluate",
@@ -147,7 +147,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"scenario\": \"Hari ini kamu dapat uang saku Rp 10.000. Kamu ingat impianmu punya sepeda baru. Tapi, di jalan pulang, teman mengajak jajan es krim kesukaan.\",\n  \"choice_index\": 2,\n  \"choice_text\": \"Jajan es krim sedikit, dan sisanya ditabung untuk sepedamu\",\n  \"user_age\": 10,\n  \"amounts\": {\n    \"expense\": 5000,\n    \"saving\": 5000,\n    \"goal_name\": \"Sepeda baru\"\n  }\n}"
+					"raw": "{\n  \"scenario\": \"Hari ini kamu dapat uang saku Rp 10.000. Kamu ingat impianmu punya sepeda baru. Tapi, di jalan pulang, teman mengajak jajan es krim kesukaan.\",\n  \"choice_index\": 2,\n  \"choice_text\": \"Jajan es krim sedikit, dan sisanya ditabung untuk sepedamu\",\n  \"user_age\": 10,\n  \"amounts\": {\n    \"expense\": 5000,\n    \"saving\": 5000\n  }\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/api/adventure/evaluate",

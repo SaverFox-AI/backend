@@ -12,7 +12,7 @@ export default registerAs(
     database: process.env.DB_DATABASE || 'saverfox_db',
     entities: [__dirname + '/../**/*.entity.js'],
     migrations: [__dirname + '/../database/migrations/*.js'],
-    synchronize: false, // Always use migrations in production
+    synchronize: process.env.NODE_ENV === 'development', // Auto-create tables in dev
     logging: process.env.NODE_ENV === 'development',
     
     // Connection pooling configuration
