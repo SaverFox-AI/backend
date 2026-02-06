@@ -115,4 +115,20 @@ export class CharacterService {
 
     return character;
   }
+
+  /**
+   * Create a character (for seeding)
+   */
+  async createCharacter(data: { name: string; imageUrl: string; isStarter: boolean; price: number }): Promise<Character> {
+    const existing = await this.characterRepository.findOne({
+      where: { name: data.name },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const character = this.characterRepository.create(data);
+    return this.characterRepository.save(character);
+  }
 }

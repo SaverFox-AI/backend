@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
@@ -10,6 +11,10 @@ import { TamagotchiModule } from './tamagotchi/tamagotchi.module';
 import { GoalModule } from './goal/goal.module';
 import { AdventureModule } from './adventure/adventure.module';
 import { HealthController } from './health.controller';
+import { SeedController } from './seed.controller';
+import { Character } from './entities/character.entity';
+import { Food } from './entities/food.entity';
+import { Mission } from './entities/mission.entity';
 import databaseConfig from './config/database.config';
 
 /**
@@ -31,6 +36,9 @@ import databaseConfig from './config/database.config';
       load: [databaseConfig],
       envFilePath: '.env',
     }),
+    
+    // TypeORM for seed controller
+    TypeOrmModule.forFeature([Character, Food, Mission]),
     
     // Database connection
     DatabaseModule,
@@ -61,7 +69,7 @@ import databaseConfig from './config/database.config';
     
     // Feature modules will be added here
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, SeedController],
   providers: [],
 })
 export class AppModule {}
