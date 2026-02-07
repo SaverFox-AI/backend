@@ -6,6 +6,8 @@ import { ProfileController } from './profile.controller';
 import { Profile } from '../entities/profile.entity';
 import { Character } from '../entities/character.entity';
 import { Tamagotchi } from '../entities/tamagotchi.entity';
+import { UserInventory } from '../entities/user-inventory.entity';
+import { Food } from '../entities/food.entity';
 import { AuthModule } from '../auth/auth.module';
 
 /**
@@ -18,7 +20,7 @@ import { AuthModule } from '../auth/auth.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Profile, Character, Tamagotchi]),
+    TypeOrmModule.forFeature([Profile, Character, Tamagotchi, UserInventory, Food]),
     AuthModule,
   ],
   controllers: [ProfileController],

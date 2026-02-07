@@ -39,9 +39,18 @@ export class ShopService {
    * Validates: Requirements 4.1
    */
   async getCharacters(): Promise<Character[]> {
-    return this.characterRepository.find({
+    const characters = await this.characterRepository.find({
       order: { price: 'ASC', name: 'ASC' },
     });
+
+    // Convert relative URLs to absolute URLs
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    return characters.map(char => ({
+      ...char,
+      imageUrl: char.imageUrl.startsWith('http') 
+        ? char.imageUrl 
+        : `${baseUrl}${char.imageUrl}`,
+    }));
   }
 
   /**
@@ -52,9 +61,18 @@ export class ShopService {
    * Validates: Requirements 4.1
    */
   async getFoods(): Promise<Food[]> {
-    return this.foodRepository.find({
+    const foods = await this.foodRepository.find({
       order: { price: 'ASC', name: 'ASC' },
     });
+
+    // Convert relative URLs to absolute URLs
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    return foods.map(food => ({
+      ...food,
+      imageUrl: food.imageUrl.startsWith('http') 
+        ? food.imageUrl 
+        : `${baseUrl}${food.imageUrl}`,
+    }));
   }
 
   /**

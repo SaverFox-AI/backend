@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from '../entities/profile.entity';
+import { UserInventory } from '../entities/user-inventory.entity';
+import { Food } from '../entities/food.entity';
 
 /**
  * ProfileService
@@ -16,6 +18,10 @@ export class ProfileService {
   constructor(
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(UserInventory)
+    private readonly inventoryRepository: Repository<UserInventory>,
+    @InjectRepository(Food)
+    private readonly foodRepository: Repository<Food>,
   ) {}
 
   /**
@@ -54,7 +60,51 @@ export class ProfileService {
       onboardingCompleted: false,
     });
 
-    return this.profileRepository.save(profile);
+    const savedProfile = await this.profileRepository.save(profile);
+
+    // Give 10 apples as starter food
+    await this.giveStarterFood(userId);
+
+    return savedProfile;
+  }
+
+  /**
+   * Give starter food to new user (10 apples)
+   * 
+   * @param userId - User ID to give food to
+   */
+  private async giveStarterFood(userId: string): Promise<void> {
+    try {
+      // Find apple food item
+      const apple = await this.foodRepository.findOne({
+        where: { name: 'Apple' },
+      });
+
+      if (apple) {
+        // Check if user already has apples in inventory
+        const existingInventory = await this.inventoryRepository.findOne({
+          where: { userId, itemId: apple.id, itemType: 'food' },
+        });
+
+        if (existingInventory) {
+          // Add to existing quantity
+          existingInventory.quantity += 10;
+          await this.inventoryRepository.save(existingInventory);
+        } else {
+          // Create new inventory entry
+          const inventory = this.inventoryRepository.create({
+            userId,
+            itemId: apple.id,
+            itemType: 'food',
+            quantity: 10,
+          });
+          await this.inventoryRepository.save(inventory);
+        }
+      }
+    } catch (error) {
+      // Log error but don't fail profile creation
+      console.error('Failed to give starter food:', error);
+    }
   }
 
   /**
@@ -76,6 +126,17 @@ export class ProfileService {
     }
 
     return profile;
+  }
+
+  /**
+   * Get profile (alias for getProfileByUserId)
+   * 
+   * @param userId - User ID to retrieve profile for
+   * @returns Profile if found
+   * @throws NotFoundException if profile doesn't exist
+   */
+  async getProfile(userId: string): Promise<Profile> {
+    return this.getProfileByUserId(userId);
   }
 
   /**

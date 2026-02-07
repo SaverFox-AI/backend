@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { Character } from './entities/character.entity';
 import { Food } from './entities/food.entity';
 import { Mission } from './entities/mission.entity';
+import { Profile } from './entities/profile.entity';
+import { UserInventory } from './entities/user-inventory.entity';
 
 /**
  * SeedController
@@ -23,6 +25,10 @@ export class SeedController {
     private readonly foodRepository: Repository<Food>,
     @InjectRepository(Mission)
     private readonly missionRepository: Repository<Mission>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(UserInventory)
+    private readonly inventoryRepository: Repository<UserInventory>,
   ) {}
 
   @Get('characters')
@@ -189,6 +195,120 @@ export class SeedController {
       message: 'Characters and foods seeded',
       characters: chars,
       foods: foods,
+    };
+  }
+
+  @Get('starter-food')
+  @ApiOperation({ summary: 'Give 10 apples to all existing users' })
+  @ApiResponse({ status: 200, description: 'Starter food given to all users' })
+  async seedStarterFood() {
+    // Find apple food item
+    const apple = await this.foodRepository.findOne({
+      where: { name: 'Apple' },
+    });
+
+    if (!apple) {
+      return {
+        message: 'Apple not found. Please seed foods first.',
+        usersUpdated: 0,
+      };
+    }
+
+    // Get all users with profiles
+    const profiles = await this.profileRepository.find();
+    let usersUpdated = 0;
+
+    for (const profile of profiles) {
+      try {
+        // Check if user already has apples
+        const existingInventory = await this.inventoryRepository.findOne({
+          where: { userId: profile.userId, itemId: apple.id, itemType: 'food' },
+        });
+
+        if (existingInventory) {
+          // Add to existing quantity
+          existingInventory.quantity += 10;
+          await this.inventoryRepository.save(existingInventory);
+          usersUpdated++;
+        } else {
+          // Create new inventory entry
+          const inventory = this.inventoryRepository.create({
+            userId: profile.userId,
+            itemId: apple.id,
+            itemType: 'food',
+            quantity: 10,
+          });
+          await this.inventoryRepository.save(inventory);
+          usersUpdated++;
+        }
+      } catch (error) {
+        console.error(`Failed to give apples to user ${profile.userId}:`, error);
+      }
+    }
+
+    return {
+      message: 'Starter food given to existing users',
+      usersUpdated,
+      totalProfiles: profiles.length,
+    };
+  }
+
+  @Get('fix-image-urls')
+  @ApiOperation({ summary: 'Fix image URLs in database to use correct paths' })
+  @ApiResponse({ status: 200, description: 'Image URLs fixed' })
+  async fixImageUrls() {
+    let foodsUpdated = 0;
+    let charactersUpdated = 0;
+
+    // Fix food image URLs
+    const foods = await this.foodRepository.find();
+    for (const food of foods) {
+      let newUrl = '';
+      
+      // Map old URLs to new URLs
+      if (food.name === 'Apple') {
+        newUrl = '/assets/asset-foods/apple.png';
+      } else if (food.name === 'Ice Cream') {
+        newUrl = '/assets/asset-foods/ice-cream.png';
+      } else if (food.name === 'Sandwich') {
+        newUrl = '/assets/asset-foods/sandwich.png';
+      } else if (food.name === 'Salad') {
+        newUrl = '/assets/asset-foods/salad.png';
+      } else if (food.name === 'Pizza Slice') {
+        newUrl = '/assets/asset-foods/pizza.png';
+      }
+
+      if (newUrl && food.imageUrl !== newUrl) {
+        food.imageUrl = newUrl;
+        await this.foodRepository.save(food);
+        foodsUpdated++;
+      }
+    }
+
+    // Fix character image URLs
+    const characters = await this.characterRepository.find();
+    for (const char of characters) {
+      let newUrl = '';
+      
+      if (char.name === 'Foxy the Fox') {
+        newUrl = '/assets/characters/foxy.png';
+      } else if (char.name === 'Penny the Penguin') {
+        newUrl = '/assets/characters/penny.png';
+      } else if (char.name === 'Buddy the Bear') {
+        newUrl = '/assets/characters/buddy.png';
+      }
+
+      if (newUrl && char.imageUrl !== newUrl) {
+        char.imageUrl = newUrl;
+        await this.characterRepository.save(char);
+        charactersUpdated++;
+      }
+    }
+
+    return {
+      message: 'Image URLs fixed',
+      foodsUpdated,
+      charactersUpdated,
     };
   }
 }

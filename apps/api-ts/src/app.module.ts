@@ -15,6 +15,8 @@ import { SeedController } from './seed.controller';
 import { Character } from './entities/character.entity';
 import { Food } from './entities/food.entity';
 import { Mission } from './entities/mission.entity';
+import { Profile } from './entities/profile.entity';
+import { UserInventory } from './entities/user-inventory.entity';
 import databaseConfig from './config/database.config';
 
 /**
@@ -38,7 +40,7 @@ import databaseConfig from './config/database.config';
     }),
     
     // TypeORM for seed controller
-    TypeOrmModule.forFeature([Character, Food, Mission]),
+    TypeOrmModule.forFeature([Character, Food, Mission, Profile, UserInventory]),
     
     // Database connection
     DatabaseModule,

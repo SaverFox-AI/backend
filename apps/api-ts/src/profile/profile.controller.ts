@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProfileService } from './profile.service';
 import { CharacterService } from './character.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,6 +23,8 @@ import { CreateProfileDto, ChooseCharacterDto } from './dto';
  * Requirements: 2.1, 2.2, 2.3, 2.4
  */
 @Controller()
+@ApiTags('profile')
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
   constructor(
@@ -46,6 +49,10 @@ export class ProfileController {
    */
   @Post('profile')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create user profile' })
+  @ApiResponse({ status: 201, description: 'Profile created successfully' })
+  @ApiResponse({ status: 409, description: 'Profile already exists' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
   async createProfile(
     @Request() req,
     @Body() createProfileDto: CreateProfileDto,
@@ -53,6 +60,28 @@ export class ProfileController {
     const userId = req.user.id;
     const { age, allowance, currency } = createProfileDto;
     return this.profileService.createProfile(userId, age, allowance, currency);
+  }
+
+  /**
+   * Get user profile
+   * 
+   * GET /profile
+   * 
+   * Returns the authenticated user's profile data.
+   * 
+   * @param req - Request object containing authenticated user
+   * @returns User profile with age, allowance, currency, onboarding status
+   * @throws NotFoundException if profile doesn't exist
+   * 
+   * Validates: Requirements 2.1
+   */
+  @Get('profile')
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Profile not found' })
+  async getProfile(@Request() req) {
+    const userId = req.user.id;
+    return this.profileService.getProfile(userId);
   }
 
   /**
@@ -67,6 +96,8 @@ export class ProfileController {
    * Validates: Requirements 2.2
    */
   @Get('characters/starter')
+  @ApiOperation({ summary: 'Get available starter characters' })
+  @ApiResponse({ status: 200, description: 'Starter characters retrieved successfully' })
   async getStarterCharacters() {
     const characters = await this.characterService.getStarterCharacters();
     return { characters };
@@ -90,6 +121,10 @@ export class ProfileController {
    */
   @Post('characters/choose')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Choose starter character and create tamagotchi' })
+  @ApiResponse({ status: 201, description: 'Character chosen and tamagotchi created' })
+  @ApiResponse({ status: 404, description: 'Character not found or not a starter' })
+  @ApiResponse({ status: 409, description: 'User already has a tamagotchi' })
   async chooseCharacter(
     @Request() req,
     @Body() chooseCharacterDto: ChooseCharacterDto,
