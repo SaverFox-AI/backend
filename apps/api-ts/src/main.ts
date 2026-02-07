@@ -76,6 +76,7 @@ async function bootstrap() {
       .addTag('tamagotchi', 'Tamagotchi care')
       .addTag('goals', 'Savings goals')
       .addTag('adventure', 'AI-generated money adventures')
+      .addTag('seed', 'Database seeding (public endpoints)')
       .addBearerAuth(
         {
           type: 'http',

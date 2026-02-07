@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Character } from './entities/character.entity';
@@ -10,9 +11,10 @@ import { Mission } from './entities/mission.entity';
  * 
  * Public endpoints for seeding initial data.
  * No authentication required.
- * Updated: 2026-02-06
+ * Updated: 2026-02-07
  */
 @Controller('seed')
+@ApiTags('seed')
 export class SeedController {
   constructor(
     @InjectRepository(Character)
@@ -24,6 +26,8 @@ export class SeedController {
   ) {}
 
   @Get('characters')
+  @ApiOperation({ summary: 'Seed starter characters' })
+  @ApiResponse({ status: 200, description: 'Characters seeded successfully' })
   async seedCharacters() {
     const characters = [
       { name: 'Foxy the Fox', imageUrl: '/assets/characters/foxy.png', isStarter: true, price: 0 },
@@ -52,6 +56,8 @@ export class SeedController {
   }
 
   @Get('foods')
+  @ApiOperation({ summary: 'Seed food items' })
+  @ApiResponse({ status: 200, description: 'Foods seeded successfully' })
   async seedFoods() {
     const foods = [
       { name: 'Apple', nutritionValue: 10, price: 5, imageUrl: '/assets/asset-foods/apple.png' },
@@ -82,6 +88,8 @@ export class SeedController {
   }
 
   @Get('missions')
+  @ApiOperation({ summary: 'Seed today\'s missions' })
+  @ApiResponse({ status: 200, description: 'Missions seeded successfully' })
   async seedMissions() {
     const now = new Date();
     const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
@@ -148,6 +156,8 @@ export class SeedController {
   }
 
   @Get('missions/debug')
+  @ApiOperation({ summary: 'Debug missions date matching' })
+  @ApiResponse({ status: 200, description: 'Mission debug info' })
   async debugMissions() {
     const allMissions = await this.missionRepository.find({
       order: { activeDate: 'DESC' },
@@ -169,6 +179,8 @@ export class SeedController {
   }
 
   @Get('all')
+  @ApiOperation({ summary: 'Seed all data (characters, foods, missions)' })
+  @ApiResponse({ status: 200, description: 'All data seeded successfully' })
   async seedAll() {
     const chars = await this.seedCharacters();
     const foods = await this.seedFoods();
