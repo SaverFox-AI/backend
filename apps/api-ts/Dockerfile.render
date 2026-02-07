@@ -8,14 +8,15 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy application code
+# Copy application code and assets
 COPY . .
-
-# Copy assets folder explicitly
-COPY assets ./assets
 
 # Build the application
 RUN npm run build
+
+# Verify assets folder exists after build
+RUN ls -la /app/assets || echo "Assets folder not found!"
+RUN ls -la /app/assets/characters || echo "Characters folder not found!"
 
 # Expose port
 EXPOSE 10000

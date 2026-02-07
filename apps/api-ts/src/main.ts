@@ -17,8 +17,11 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     
-    // Serve static files from assets folder (1 level up from dist)
-    app.useStaticAssets(join(__dirname, '..', 'assets'), {
+    // Serve static files from assets folder
+    // In production: __dirname = /app/dist, so .. goes to /app, then assets
+    const assetsPath = join(__dirname, '..', 'assets');
+    console.log(`📁 Serving static assets from: ${assetsPath}`);
+    app.useStaticAssets(assetsPath, {
       prefix: '/assets/',
     });
     
