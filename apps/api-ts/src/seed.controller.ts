@@ -26,9 +26,9 @@ export class SeedController {
   @Get('characters')
   async seedCharacters() {
     const characters = [
-      { name: 'Foxy the Fox', imageUrl: '/images/characters/foxy.png', isStarter: true, price: 0 },
-      { name: 'Penny the Penguin', imageUrl: '/images/characters/penny.png', isStarter: true, price: 0 },
-      { name: 'Buddy the Bear', imageUrl: '/images/characters/buddy.png', isStarter: true, price: 0 },
+      { name: 'Foxy the Fox', imageUrl: '/assets/characters/foxy.png', isStarter: true, price: 0 },
+      { name: 'Penny the Penguin', imageUrl: '/assets/characters/penny.png', isStarter: true, price: 0 },
+      { name: 'Buddy the Bear', imageUrl: '/assets/characters/buddy.png', isStarter: true, price: 0 },
     ];
     
     const created = [];
@@ -54,11 +54,11 @@ export class SeedController {
   @Get('foods')
   async seedFoods() {
     const foods = [
-      { name: 'Apple', nutritionValue: 10, price: 5, imageUrl: '/images/foods/apple.png' },
-      { name: 'Sandwich', nutritionValue: 25, price: 10, imageUrl: '/images/foods/sandwich.png' },
-      { name: 'Pizza Slice', nutritionValue: 30, price: 15, imageUrl: '/images/foods/pizza.png' },
-      { name: 'Salad', nutritionValue: 20, price: 12, imageUrl: '/images/foods/salad.png' },
-      { name: 'Ice Cream', nutritionValue: 15, price: 8, imageUrl: '/images/foods/icecream.png' },
+      { name: 'Apple', nutritionValue: 10, price: 5, imageUrl: '/assets/asset-foods/apple.png' },
+      { name: 'Sandwich', nutritionValue: 25, price: 10, imageUrl: '/assets/asset-foods/sandwich.png' },
+      { name: 'Pizza Slice', nutritionValue: 30, price: 15, imageUrl: '/assets/asset-foods/pizza.png' },
+      { name: 'Salad', nutritionValue: 20, price: 12, imageUrl: '/assets/asset-foods/salad.png' },
+      { name: 'Ice Cream', nutritionValue: 15, price: 8, imageUrl: '/assets/asset-foods/ice-cream.png' },
     ];
     
     const created = [];

@@ -1,0 +1,2 @@
+Placeholder for character images.
+Add foxy.png, penny.png, buddy.png to assets/characters/ folder.

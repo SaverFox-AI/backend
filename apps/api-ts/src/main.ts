@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import {
   AllExceptionsFilter,
@@ -13,7 +15,12 @@ import {
  */
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    
+    // Serve static files from assets folder (1 level up from dist)
+    app.useStaticAssets(join(__dirname, '..', 'assets'), {
+      prefix: '/assets/',
+    });
     
     // Global exception filters (order matters - most specific first)
     app.useGlobalFilters(

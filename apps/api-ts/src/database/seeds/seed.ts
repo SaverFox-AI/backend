@@ -28,9 +28,9 @@ async function seed() {
     console.log('📦 Seeding starter characters...');
     await dataSource.query(`
       INSERT INTO characters (name, image_url, is_starter, price) VALUES
-      ('Foxy the Fox', '/images/characters/foxy.png', true, 0),
-      ('Penny the Penguin', '/images/characters/penny.png', true, 0),
-      ('Buddy the Bear', '/images/characters/buddy.png', true, 0)
+      ('Foxy the Fox', '/assets/characters/foxy.png', true, 0),
+      ('Penny the Penguin', '/assets/characters/penny.png', true, 0),
+      ('Buddy the Bear', '/assets/characters/buddy.png', true, 0)
       ON CONFLICT DO NOTHING;
     `);
     console.log('✅ Starter characters seeded');
@@ -39,11 +39,11 @@ async function seed() {
     console.log('📦 Seeding food items...');
     await dataSource.query(`
       INSERT INTO foods (name, nutrition_value, price, image_url) VALUES
-      ('Apple', 10, 5, '/images/foods/apple.png'),
-      ('Sandwich', 25, 10, '/images/foods/sandwich.png'),
-      ('Pizza Slice', 30, 15, '/images/foods/pizza.png'),
-      ('Salad', 20, 12, '/images/foods/salad.png'),
-      ('Ice Cream', 15, 8, '/images/foods/icecream.png')
+      ('Apple', 10, 5, '/assets/asset-foods/apple.png'),
+      ('Sandwich', 25, 10, '/assets/asset-foods/sandwich.png'),
+      ('Pizza Slice', 30, 15, '/assets/asset-foods/pizza.png'),
+      ('Salad', 20, 12, '/assets/asset-foods/salad.png'),
+      ('Ice Cream', 15, 8, '/assets/asset-foods/ice-cream.png')
       ON CONFLICT DO NOTHING;
     `);
     console.log('✅ Food items seeded');
