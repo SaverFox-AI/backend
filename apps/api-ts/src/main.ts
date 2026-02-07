@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import {
   AllExceptionsFilter,
@@ -18,12 +19,22 @@ async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     
     // Serve static files from assets folder
-    // In production: __dirname = /app/dist, so .. goes to /app, then assets
-    const assetsPath = join(__dirname, '..', 'assets');
-    console.log(`📁 Serving static assets from: ${assetsPath}`);
-    app.useStaticAssets(assetsPath, {
-      prefix: '/assets/',
-    });
+    // Try multiple possible paths for assets
+    const possiblePaths = [
+      join(__dirname, '..', 'assets'),           // /app/dist/../assets = /app/assets
+      join(process.cwd(), 'assets'),             // /app/assets
+      join(__dirname, '..', '..', 'assets'),     // fallback
+    ];
+    
+    let assetsPath = possiblePaths[0];
+    console.log(`🔍 Checking assets paths:`);
+    possiblePaths.forEach(p => console.log(`  - ${p}`));
+    
+    // Use express.static directly for better control
+    app.use('/assets', express.static(possiblePaths[0]));
+    app.use('/assets', express.static(possiblePaths[1]));
+    
+    console.log(`📁 Static assets middleware configured`);
     
     // Global exception filters (order matters - most specific first)
     app.useGlobalFilters(
